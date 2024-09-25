@@ -3,6 +3,7 @@ pub struct Poly {
     values: Vec::new(),
     rem: Option<(Poly, Poly)>,
 }
+
 impl std::ops::Add for Poly {
     type Output = Self;
 
