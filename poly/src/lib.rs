@@ -3,7 +3,7 @@
 // and any remainders it might have.
 pub struct Poly {
     power: i64,
-    values: Vec::new(),
+    values: Vec<i64>,
     rem: Option<(Poly, Poly)>,
 }
 
@@ -12,28 +12,26 @@ impl std::ops::Add for Poly {
     type Output = Self;
 
     pub fn add(&self, poly2: &self) -> Self {
-        if self.power < poly2.power {
-            return poly2 + self;
-        }
-        // declares a vec of the right length
-        let temp_arr = vec![0; self.power];
-        // shadows temp_arr with the poly correctly added
-        let temp_arr = temp_arr
+        let higher = self if self.power>poly2.power else poly2;
+        let lower = self if self.power<=poly2.power else poly2;
+
+        // shadows higher with lower added to it
+        let higher = higher
             .iter()
             .enumerate()
             .map(|p| {
                 // if the values isn't in the shorter vec
-                if p > poly2.power {
+                if p > lower.power {
                     // just use the longer vec
-                    self.values[self.power - p]
+                    higher.values[higher.power - p]
                 } else {
-                    self.values[self.power - p] + poly2.values[poly2.power - p]
+                    higher.values[higher].power - p] + lower.values[lower.power - p]
                 }
             })
             .collect::<Vec<_>>();
         Self {
-            power: self.power,
-            values: temp_arr,
+            power: higher.power,
+            values: higher,
             rem: None,
         }
     }
@@ -44,28 +42,26 @@ impl std::ops::Sub for Poly {
     type Output = Self;
 
     pub fn sub(&self, poly2: &self) -> Self {
-        if self.power < poly2.power {
-            return poly2 - self;
-        }
-        // declares a vec of the right length
-        let temp_arr = vec![0; self.power];
-        // shadows temp_arr with the poly correctly subtracted
-        let temp_arr = temp_arr
+        let higher = self if self.power>poly2.power else poly2;
+        let lower = self if self.power<=poly2.power else poly2;
+
+        // shadows higher with lower subtracted from it
+        let higher = higher
             .iter()
             .enumerate()
             .map(|p| {
                 // if the values isn't in the shorter vec
-                if p > poly2.power {
+                if p > lower.power {
                     // just use the longer vec
-                    self.values[self.power - p]
+                    higher.values[higher.power - p]
                 } else {
-                    self.values[self.power - p] - poly2.values[poly2.power - p]
+                    higher.values[higher].power - p] - lower.values[lower.power - p]
                 }
             })
             .collect::<Vec<_>>();
         Self {
-            power: self.power,
-            values: temp_arr,
+            power: higher.power,
+            values: higher,
             rem: None,
         }
     }
@@ -76,5 +72,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn it_works() {}
+    fn it_works() {
+
+    }
 }
