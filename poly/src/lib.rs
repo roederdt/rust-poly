@@ -15,16 +15,16 @@ impl std::ops::Add for Poly {
         if self.power < poly2.power {
             return poly2 + self;
         }
-        //declares a vec of the right length
+        // declares a vec of the right length
         let temp_arr = vec![0; self.power];
         // shadows temp_arr with the poly correctly added
         let temp_arr = temp_arr
             .iter()
             .enumerate()
             .map(|p| {
-                //if the values isn't in the shorter vec
+                // if the values isn't in the shorter vec
                 if p > poly2.power {
-                    //just use the longer vec
+                    // just use the longer vec
                     self.values[self.power - p]
                 } else {
                     self.values[self.power - p] + poly2.values[poly2.power - p]
@@ -47,16 +47,16 @@ impl std::ops::Sub for Poly {
         if self.power < poly2.power {
             return poly2 - self;
         }
-        //declares a vec of the right length
+        // declares a vec of the right length
         let temp_arr = vec![0; self.power];
         // shadows temp_arr with the poly correctly subtracted
         let temp_arr = temp_arr
             .iter()
             .enumerate()
             .map(|p| {
-                //if the values isn't in the shorter vec
+                // if the values isn't in the shorter vec
                 if p > poly2.power {
-                    //just use the longer vec
+                    // just use the longer vec
                     self.values[self.power - p]
                 } else {
                     self.values[self.power - p] - poly2.values[poly2.power - p]
