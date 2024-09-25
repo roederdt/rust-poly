@@ -28,12 +28,12 @@ impl std::ops::Add for Poly {
             .enumerate()
             .map(|p| {
                 // if the values isn't in the shorter vec
-                if p.0 > lower.len() {
+                if p.0 as i64 > lower.len() as i64 - 1 {
                     // just use the longer vec
-                    higher[((p.0 as i64 - higher.len() as i64) * -1) as usize]
+                    higher[((p.0 as i64 - (higher.len() as i64) + 1) * -1) as usize]
                 } else {
-                    higher[((p.0 as i64 - higher.len() as i64) * -1) as usize]
-                        + lower[((p.0 as i64 - lower.len() as i64) * -1) as usize]
+                    higher[((p.0 as i64 - (higher.len() as i64) + 1) * -1) as usize]
+                        + lower[((p.0 as i64 - (lower.len() as i64) + 1) * -1) as usize]
                 }
             })
             .collect::<Vec<_>>();
@@ -67,12 +67,12 @@ impl std::ops::Sub for Poly {
             .enumerate()
             .map(|p| {
                 // if the values isn't in the shorter vec
-                if p.0 > lower.len() {
+                if p.0 as i64 > lower.len() as i64 - 1 {
                     // just use the longer vec
-                    higher[((p.0 as i64 - higher.len() as i64) * -1) as usize]
+                    higher[((p.0 as i64 - (higher.len() as i64) + 1) * -1) as usize]
                 } else {
-                    higher[((p.0 as i64 - higher.len() as i64) * -1) as usize]
-                        - lower[((p.0 as i64 - lower.len() as i64) * -1) as usize]
+                    higher[((p.0 as i64 - (higher.len() as i64) + 1) * -1) as usize]
+                        - lower[((p.0 as i64 - (lower.len() as i64) + 1) * -1) as usize]
                 }
             })
             .collect::<Vec<_>>();
