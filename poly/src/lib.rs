@@ -1,9 +1,12 @@
+// Struct that represents a polynomial
+// with its highest power, all coefficients(in order from highest power to lowest power),
+// and any remainders it might have.
 pub struct Poly {
     power: i64,
     values: Vec::new(),
     rem: Option<(Poly, Poly)>,
 }
-
+// Implements Add for the Poly
 impl std::ops::Add for Poly {
     type Output = Self;
 
@@ -23,7 +26,7 @@ impl std::ops::Add for Poly {
                 }
             })
             .collect::<Vec<_>>();
-        Poly {
+        Self {
             power: self.power,
             values: temp_arr,
             rem: None,
@@ -50,7 +53,7 @@ impl std::ops::Sub for Poly {
                 }
             })
             .collect::<Vec<_>>();
-        Poly {
+        PSelf {
             power: self.power,
             values: temp_arr,
             rem: None,
