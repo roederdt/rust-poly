@@ -23,22 +23,12 @@ impl std::ops::Add for Poly {
                 // if the values isn't in the shorter vec
                 if p > lower.power {
                     // just use the longer vec
-                    higher.values[higher.power - p]
+                    higher.values[-(p-higher.power)]
                 } else {
-                    higher.values[higher].power - p] + lower.values[lower.power - p]
+                    higher.values[-(p-higher.power)] + lower.values[-(p-lower.power)]
                 }
             })
             .collect::<Vec<_>>();
-
-        // flips higher back to normal
-        let higher = higher
-            .iter()
-            .enumerate()
-            .map(|p| {
-                higher.values[higher.power - p]
-            })
-            .collect::<Vec<_>>();
-
         Self {
             power: higher.power,
             values: higher,
@@ -63,19 +53,10 @@ impl std::ops::Sub for Poly {
                 // if the values isn't in the shorter vec
                 if p > lower.power {
                     // just use the longer vec
-                    higher.values[higher.power - p]
+                    higher.values[-(p-higher.power)]
                 } else {
-                    higher.values[higher].power - p] - lower.values[lower.power - p]
+                    higher.values[-(p-higher.power)] - lower.values[-(p-lower.power)]
                 }
-            })
-            .collect::<Vec<_>>();
-
-        // flips higher back to normal
-        let higher = higher
-            .iter()
-            .enumerate()
-            .map(|p| {
-                higher.values[higher.power - p]
             })
             .collect::<Vec<_>>();
 
