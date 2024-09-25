@@ -15,7 +15,7 @@ impl std::ops::Add for Poly {
         let higher = self if self.power>poly2.power else poly2;
         let lower = self if self.power<=poly2.power else poly2;
 
-        // shadows higher with lower added to it
+        // shadows higher with lower added to it(and accidently flips it in the process)
         let higher = higher
             .iter()
             .enumerate()
@@ -29,6 +29,16 @@ impl std::ops::Add for Poly {
                 }
             })
             .collect::<Vec<_>>();
+
+        // flips higher back to normal
+        let higher = higher
+            .iter()
+            .enumerate()
+            .map(|p| {
+                higher.values[higher.power - p]
+            })
+            .collect::<Vec<_>>();
+
         Self {
             power: higher.power,
             values: higher,
@@ -45,7 +55,7 @@ impl std::ops::Sub for Poly {
         let higher = self if self.power>poly2.power else poly2;
         let lower = self if self.power<=poly2.power else poly2;
 
-        // shadows higher with lower subtracted from it
+        // shadows higher with lower subtracted from it(and accidently flips it in the process)
         let higher = higher
             .iter()
             .enumerate()
@@ -59,6 +69,16 @@ impl std::ops::Sub for Poly {
                 }
             })
             .collect::<Vec<_>>();
+
+        // flips higher back to normal
+        let higher = higher
+            .iter()
+            .enumerate()
+            .map(|p| {
+                higher.values[higher.power - p]
+            })
+            .collect::<Vec<_>>();
+
         Self {
             power: higher.power,
             values: higher,
