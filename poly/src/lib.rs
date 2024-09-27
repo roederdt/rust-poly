@@ -22,28 +22,19 @@ impl std::ops::Add for Poly {
             lower = self.values;
         }
 
-        // shadows higher with lower added to it(and accidently flips it in the process)
+        // shadows higher with lower added to it
         let higher = higher
             .iter()
             .enumerate()
             .map(|p| {
                 // if the values isn't in the shorter vec
-                if p.0 as i64 > lower.len() as i64 - 1 {
+                if p.0 >= lower.len() {
                     // just use the longer vec
-                    higher[(higher.len() as i64 - p.0 as i64 - 1) as usize]
+                    higher[p.0]
                 } else {
-                    higher[(higher.len() as i64 - p.0 as i64 - 1) as usize]
-                        + lower[(lower.len() as i64 - p.0 as i64 - 1) as usize]
+                    higher[p.0] + lower[p.0]
                 }
             })
-            .collect::<Vec<_>>();
-
-        // flips back
-        let higher = higher
-            .iter()
-            .rev()
-            .enumerate()
-            .map(|p| higher[(higher.len() as i64 - p.0 as i64 - 1) as usize])
             .collect::<Vec<_>>();
 
         Self {
@@ -59,37 +50,40 @@ impl std::ops::Sub for Poly {
     type Output = Self;
 
     fn sub(self, poly2: Poly) -> Self {
+        let h_first;
         let higher;
         let lower;
         if self.power > poly2.power {
             higher = self.values;
             lower = poly2.values;
+            h_first = true;
         } else {
             higher = poly2.values;
             lower = self.values;
+            h_first = false;
         }
 
-        // shadows higher with lower subtracted from it(and accidently flips it in the process)
+        // shadows higher with second subtracted from first
         let higher = higher
             .iter()
             .enumerate()
             .map(|p| {
                 // if the values isn't in the shorter vec
-                if p.0 as i64 > lower.len() as i64 - 1 {
-                    // just use the longer vec
-                    higher[(higher.len() as i64 - p.0 as i64 - 1) as usize]
+                if p.0 >= lower.len() {
+                    // just use the longer vec(and subtract it if it's second)
+                    if h_first {
+                        higher[p.0]
+                    } else {
+                        higher[p.0] * -1
+                    }
                 } else {
-                    higher[(higher.len() as i64 - p.0 as i64 - 1) as usize]
-                        - lower[(lower.len() as i64 - p.0 as i64 - 1) as usize]
+                    if h_first {
+                        higher[p.0] - lower[p.0]
+                    } else {
+                        lower[p.0] - higher[p.0]
+                    }
                 }
             })
-            .collect::<Vec<_>>();
-
-        // flips back
-        let higher = higher
-            .iter()
-            .enumerate()
-            .map(|p| higher[(higher.len() as i64 - p.0 as i64 - 1) as usize])
             .collect::<Vec<_>>();
 
         Self {
@@ -109,11 +103,11 @@ mod tests {
         assert_eq!(
             (Poly {
                 power: 3,
-                values: vec![1, 2, 3],
+                values: vec![3, 2, 1],
                 rem: None
             } + Poly {
                 power: 4,
-                values: vec![1, 2, 3, 4],
+                values: vec![4, 3, 2, 1],
                 rem: None
             })
             .power,
@@ -125,15 +119,15 @@ mod tests {
         assert_eq!(
             (Poly {
                 power: 3,
-                values: vec![1, 2, 3],
+                values: vec![3, 2, 1],
                 rem: None
             } + Poly {
                 power: 4,
-                values: vec![1, 2, 3, 4],
+                values: vec![4, 3, 2, 1],
                 rem: None
             })
             .values,
-            vec![1, 3, 5, 7]
+            vec![7, 5, 3, 1]
         );
     }
     #[test]
@@ -157,15 +151,15 @@ mod tests {
         assert_eq!(
             (Poly {
                 power: 3,
-                values: vec![1, 2, 4],
+                values: vec![4, 2, 1],
                 rem: None
             } - Poly {
                 power: 4,
-                values: vec![1, 2, 3, 4],
+                values: vec![4, 3, 2, 1],
                 rem: None
             })
             .values,
-            vec![1, 1, 1, 0]
+            vec![0, -1, -1, -1]
         );
     }
 }
