@@ -16,7 +16,6 @@ impl Poly {
                 values: vec![0],
                 rem: None,
             }
-            .remove_trail()
         } else {
             Poly {
                 power: coeff.len(),
@@ -27,23 +26,20 @@ impl Poly {
         }
     }
     // Removes trailing zeros, so that the polynomials don't end up like 0x^7+0x^6... ...+15
-    fn remove_trail(&self) -> Self {
-        let mut higher = self.values.clone();
-        let mut val = 1;
-        // Loops backwards through the indices of the vec, and if the previous one was a zero, pop it
-        // If the current one isn't a zero, end the checking
-        for x in (0..higher.len()).rev() {
-            if val == 0 {
-                higher.pop();
-            }
-            val = higher[x];
-            if val != 0 {
-                break;
-            }
+    fn remove_trail(self) -> Self {
+        if self.values.len() == 1 {
+            return self;
         }
+        let mut values: Vec<i64> = self
+            .values
+            .into_iter()
+            .rev()
+            .skip_while(|&x| x == 0)
+            .collect();
+        values.reverse();
         Poly {
-            power: higher.len(),
-            values: higher,
+            power: values.len(),
+            values,
             rem: None,
         }
     }
@@ -51,34 +47,24 @@ impl Poly {
 
 // Implements Add for the Poly
 impl std::ops::Add for Poly {
-    type Output = Self;
+    type Output = Poly;
 
     fn add(self, poly2: Poly) -> Self {
-        let higher;
+        let mut higher;
         let lower;
         if self.power > poly2.power {
-            higher = self.values;
-            lower = poly2.values;
+            higher = self;
+            lower = poly2;
         } else {
-            higher = poly2.values;
-            lower = self.values;
+            higher = poly2;
+            lower = self;
         }
 
-        // Shadows higher with lower added to it
-        let higher = higher
-            .iter()
-            .enumerate()
-            .map(|p| {
-                // If the values isn't in the shorter vec
-                if p.0 >= lower.len() {
-                    // Just use the longer vec
-                    higher[p.0]
-                } else {
-                    higher[p.0] + lower[p.0]
-                }
-            })
-            .collect::<Vec<_>>();
-        Poly::new(&higher.as_slice())
+        for x in 0..lower.values.len() {
+            higher.values[x] += lower.values[x];
+        }
+
+        higher.remove_trail()
     }
 }
 
@@ -88,42 +74,27 @@ impl std::ops::Sub for Poly {
 
     fn sub(self, poly2: Poly) -> Self {
         let h_first;
-        let higher;
-        let lower;
-        if self.power > poly2.power {
-            higher = self.values;
-            lower = poly2.values;
+        let mut higher;
+        let mut lower;
+        if self.power >= poly2.power {
+            higher = self;
+            lower = poly2;
             h_first = true;
         } else {
-            higher = poly2.values;
-            lower = self.values;
+            higher = poly2;
+            lower = self;
             h_first = false;
         }
 
-        // Shadows higher with second subtracted from first
-        let higher = higher
-            .iter()
-            .enumerate()
-            .map(|p| {
-                // If the values isn't in the shorter vec
-                if p.0 >= lower.len() {
-                    // Just use the longer vec(and subtract it if it's second)
-                    if h_first {
-                        higher[p.0]
-                    } else {
-                        higher[p.0] * -1
-                    }
-                } else {
-                    if h_first {
-                        higher[p.0] - lower[p.0]
-                    } else {
-                        lower[p.0] - higher[p.0]
-                    }
-                }
-            })
-            .collect::<Vec<_>>();
+        for x in 0..higher.values.len() {
+            higher.values[x] = if h_first {
+                higher.values[x] - lower.values.get(x).unwrap_or(&0)
+            } else {
+                lower.values.get(x).unwrap_or(&0) - higher.values[x]
+            };
+        }
 
-        Poly::new(&higher.as_slice())
+        higher.remove_trail()
     }
 }
 
@@ -133,14 +104,14 @@ impl std::ops::Mul for Poly {
     fn mul(self, poly2: Poly) -> Self {
         let new_power = self.power + poly2.power - 1;
         // Allocate a new vec of the required length
-        let mut sum = vec![0; new_power];
+        let mut accum = vec![0; new_power];
         // Loops through both vecs and mults them(added to the stuff already in there)
         for x in 0..self.values.len() {
             for y in 0..poly2.values.len() {
-                sum[x + y] += self.values[x] * poly2.values[y];
+                accum[x + y] += self.values[x] * poly2.values[y];
             }
         }
-        Poly::new(&sum.as_slice())
+        Poly::new(&accum)
     }
 }
 
