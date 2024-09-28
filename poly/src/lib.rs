@@ -7,6 +7,36 @@ pub struct Poly {
     rem: Option<(Box<Poly>, Box<Poly>)>,
 }
 
+impl Poly {
+    fn new(coeff: &[i64]) -> Self {
+        Poly {
+            power: coeff.len(),
+            values: coeff.to_vec(),
+            rem: None,
+        }
+        .remove_trail()
+    }
+
+    fn remove_trail(&self) -> Self {
+        let mut higher = self.values.clone();
+        let mut val = 1;
+        for x in (0..higher.len()).rev() {
+            if val == 0 {
+                higher.pop();
+            }
+            val = higher[x];
+            if val != 0 {
+                break;
+            }
+        }
+        Poly {
+            power: higher.len(),
+            values: higher,
+            rem: None,
+        }
+    }
+}
+
 // Implements Add for the Poly
 impl std::ops::Add for Poly {
     type Output = Self;
@@ -36,12 +66,7 @@ impl std::ops::Add for Poly {
                 }
             })
             .collect::<Vec<_>>();
-
-        Self {
-            power: higher.len(),
-            values: higher,
-            rem: None,
-        }
+        Poly::new(&higher.as_slice())
     }
 }
 
@@ -86,11 +111,7 @@ impl std::ops::Sub for Poly {
             })
             .collect::<Vec<_>>();
 
-        Self {
-            power: higher.len(),
-            values: higher,
-            rem: None,
-        }
+        Poly::new(&higher.as_slice())
     }
 }
 
@@ -135,11 +156,11 @@ mod tests {
         assert_eq!(
             (Poly {
                 power: 3,
-                values: vec![1, 2, 3],
+                values: vec![3, 2, 1],
                 rem: None
             } - Poly {
                 power: 4,
-                values: vec![1, 2, 3, 4],
+                values: vec![4, 3, 2, 1],
                 rem: None
             })
             .power,
@@ -161,5 +182,39 @@ mod tests {
             .values,
             vec![0, -1, -1, -1]
         );
+    }
+
+    #[test]
+    fn a_b_works() {
+        assert_eq!(
+            (Poly {
+                power: 3,
+                values: vec![4, 2, 1],
+                rem: None
+            } - Poly {
+                power: 4,
+                values: vec![4, 3, 2, 1],
+                rem: None
+            } + Poly {
+                power: 4,
+                values: vec![4, 3, 2, 1],
+                rem: None
+            })
+            .values,
+            vec![4, 2, 1]
+        );
+    }
+    #[test]
+    fn new_works() {
+        let a = [1, 2, 3, 4, 5];
+        let slice = &a[1..3];
+        assert_eq!(Poly::new(slice).power, 2);
+    }
+
+    #[test]
+    fn new_works2() {
+        let a = [1, 2, 3, 4, 5];
+        let slice = &a[1..3];
+        assert_eq!(Poly::new(slice).values, vec![2, 3]);
     }
 }
