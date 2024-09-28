@@ -115,6 +115,21 @@ impl std::ops::Sub for Poly {
     }
 }
 
+impl std::ops::Mul for Poly {
+    type Output = Self;
+
+    fn mul(self, poly2: Poly) -> Self {
+        let new_power = self.power + poly2.power - 1;
+        let mut sum = vec![0; new_power];
+        for x in 0..self.values.len() {
+            for y in 0..poly2.values.len() {
+                sum[x + y] += self.values[x] * poly2.values[y];
+            }
+        }
+        Poly::new(&sum.as_slice())
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -206,15 +221,30 @@ mod tests {
     }
     #[test]
     fn new_works() {
-        let a = [1, 2, 3, 4, 5];
-        let slice = &a[1..3];
-        assert_eq!(Poly::new(slice).power, 2);
+        let tvec = vec![1, 2, 3, 4, 5];
+        assert_eq!(Poly::new(tvec.as_slice()).power, 5);
     }
 
     #[test]
     fn new_works2() {
-        let a = [1, 2, 3, 4, 5];
-        let slice = &a[1..3];
-        assert_eq!(Poly::new(slice).values, vec![2, 3]);
+        let tvec = vec![1, 2, 3, 4, 5];
+        assert_eq!(Poly::new(tvec.as_slice()).values, vec![1, 2, 3, 4, 5]);
+    }
+    #[test]
+    fn mul_works() {
+        let tvec = vec![1, 2, 3];
+        assert_eq!(
+            (Poly::new(tvec.as_slice()) * Poly::new(tvec.as_slice())).power,
+            5
+        );
+    }
+
+    #[test]
+    fn mul_works2() {
+        let tvec = vec![1, 2, 3];
+        assert_eq!(
+            (Poly::new(tvec.as_slice()) * Poly::new(tvec.as_slice())).values,
+            vec![1, 4, 10, 12, 9]
+        );
     }
 }
