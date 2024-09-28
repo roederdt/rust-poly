@@ -8,6 +8,7 @@ pub struct Poly {
 }
 
 impl Poly {
+    // Creates new Poly from i64 slice
     fn new(coeff: &[i64]) -> Self {
         Poly {
             power: coeff.len(),
@@ -16,10 +17,12 @@ impl Poly {
         }
         .remove_trail()
     }
-
+    // Removes trailing zeros, so that the polynomials don't end up like 0x^7+0x^6... ...+15
     fn remove_trail(&self) -> Self {
         let mut higher = self.values.clone();
         let mut val = 1;
+        // Loops backwards through the indices of the vec, and if the previous one was a zero, pop it
+        // If the current one isn't a zero, end the checking
         for x in (0..higher.len()).rev() {
             if val == 0 {
                 higher.pop();
@@ -52,14 +55,14 @@ impl std::ops::Add for Poly {
             lower = self.values;
         }
 
-        // shadows higher with lower added to it
+        // Shadows higher with lower added to it
         let higher = higher
             .iter()
             .enumerate()
             .map(|p| {
-                // if the values isn't in the shorter vec
+                // If the values isn't in the shorter vec
                 if p.0 >= lower.len() {
-                    // just use the longer vec
+                    // Just use the longer vec
                     higher[p.0]
                 } else {
                     higher[p.0] + lower[p.0]
@@ -88,14 +91,14 @@ impl std::ops::Sub for Poly {
             h_first = false;
         }
 
-        // shadows higher with second subtracted from first
+        // Shadows higher with second subtracted from first
         let higher = higher
             .iter()
             .enumerate()
             .map(|p| {
-                // if the values isn't in the shorter vec
+                // If the values isn't in the shorter vec
                 if p.0 >= lower.len() {
-                    // just use the longer vec(and subtract it if it's second)
+                    // Just use the longer vec(and subtract it if it's second)
                     if h_first {
                         higher[p.0]
                     } else {
@@ -120,7 +123,9 @@ impl std::ops::Mul for Poly {
 
     fn mul(self, poly2: Poly) -> Self {
         let new_power = self.power + poly2.power - 1;
+        // Allocate a new vec of the required length
         let mut sum = vec![0; new_power];
+        // Loops through both vecs and mults them(added to the stuff already in there)
         for x in 0..self.values.len() {
             for y in 0..poly2.values.len() {
                 sum[x + y] += self.values[x] * poly2.values[y];
