@@ -10,12 +10,21 @@ pub struct Poly {
 impl Poly {
     // Creates new Poly from i64 slice
     fn new(coeff: &[i64]) -> Self {
-        Poly {
-            power: coeff.len(),
-            values: coeff.to_vec(),
-            rem: None,
+        if coeff.len() == 0 {
+            Poly {
+                power: coeff.len(),
+                values: vec![0],
+                rem: None,
+            }
+            .remove_trail()
+        } else {
+            Poly {
+                power: coeff.len(),
+                values: coeff.to_vec(),
+                rem: None,
+            }
+            .remove_trail()
         }
-        .remove_trail()
     }
     // Removes trailing zeros, so that the polynomials don't end up like 0x^7+0x^6... ...+15
     fn remove_trail(&self) -> Self {
@@ -142,64 +151,28 @@ mod tests {
     #[test]
     fn add_works() {
         assert_eq!(
-            (Poly {
-                power: 3,
-                values: vec![3, 2, 1],
-                rem: None
-            } + Poly {
-                power: 4,
-                values: vec![4, 3, 2, 1],
-                rem: None
-            })
-            .power,
+            (Poly::new(&vec![3, 2, 1]) + Poly::new(&vec![4, 3, 2, 1])).power,
             4
         );
     }
     #[test]
     fn add_works2() {
         assert_eq!(
-            (Poly {
-                power: 3,
-                values: vec![3, 2, 1],
-                rem: None
-            } + Poly {
-                power: 4,
-                values: vec![4, 3, 2, 1],
-                rem: None
-            })
-            .values,
+            (Poly::new(&vec![3, 2, 1]) + Poly::new(&vec![4, 3, 2, 1])).values,
             vec![7, 5, 3, 1]
         );
     }
     #[test]
     fn sub_works() {
         assert_eq!(
-            (Poly {
-                power: 3,
-                values: vec![3, 2, 1],
-                rem: None
-            } - Poly {
-                power: 4,
-                values: vec![4, 3, 2, 1],
-                rem: None
-            })
-            .power,
+            (Poly::new(&vec![3, 2, 1]) - Poly::new(&vec![4, 3, 2, 1])).power,
             4
         );
     }
     #[test]
     fn sub_works2() {
         assert_eq!(
-            (Poly {
-                power: 3,
-                values: vec![4, 2, 1],
-                rem: None
-            } - Poly {
-                power: 4,
-                values: vec![4, 3, 2, 1],
-                rem: None
-            })
-            .values,
+            (Poly::new(&vec![4, 2, 1]) - Poly::new(&vec![4, 3, 2, 1])).values,
             vec![0, -1, -1, -1]
         );
     }
@@ -207,19 +180,8 @@ mod tests {
     #[test]
     fn a_b_works() {
         assert_eq!(
-            (Poly {
-                power: 3,
-                values: vec![4, 2, 1],
-                rem: None
-            } - Poly {
-                power: 4,
-                values: vec![4, 3, 2, 1],
-                rem: None
-            } + Poly {
-                power: 4,
-                values: vec![4, 3, 2, 1],
-                rem: None
-            })
+            (Poly::new(&vec![4, 2, 1]) - Poly::new(&vec![4, 3, 2, 1])
+                + Poly::new(&vec![4, 3, 2, 1]))
             .values,
             vec![4, 2, 1]
         );
@@ -227,28 +189,31 @@ mod tests {
     #[test]
     fn new_works() {
         let tvec = vec![1, 2, 3, 4, 5];
-        assert_eq!(Poly::new(tvec.as_slice()).power, 5);
+        assert_eq!(Poly::new(&tvec).power, 5);
     }
 
     #[test]
     fn new_works2() {
         let tvec = vec![1, 2, 3, 4, 5];
-        assert_eq!(Poly::new(tvec.as_slice()).values, vec![1, 2, 3, 4, 5]);
+        assert_eq!(Poly::new(&tvec).values, vec![1, 2, 3, 4, 5]);
     }
+    #[test]
+    fn new_works3() {
+        let tvec = Vec::new();
+        assert_eq!(Poly::new(&tvec).values, vec![0]);
+    }
+
     #[test]
     fn mul_works() {
         let tvec = vec![1, 2, 3];
-        assert_eq!(
-            (Poly::new(tvec.as_slice()) * Poly::new(tvec.as_slice())).power,
-            5
-        );
+        assert_eq!((Poly::new(&tvec) * Poly::new(&tvec)).power, 5);
     }
 
     #[test]
     fn mul_works2() {
         let tvec = vec![1, 2, 3];
         assert_eq!(
-            (Poly::new(tvec.as_slice()) * Poly::new(tvec.as_slice())).values,
+            (Poly::new(&tvec) * Poly::new(&tvec)).values,
             vec![1, 4, 10, 12, 9]
         );
     }
