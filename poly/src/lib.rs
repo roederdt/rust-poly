@@ -101,6 +101,16 @@ impl std::ops::Mul for Poly {
     }
 }
 
+impl std::ops::Div for Poly {
+    type Output = (Self, Self);
+
+    fn div(self, poly2: Poly) -> (Self, Self) {
+        let dividend = self.values;
+        let divisor = poly2.values;
+        for x in (0..self.values.len()).rev() {}
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
