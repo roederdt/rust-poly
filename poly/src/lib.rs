@@ -2,27 +2,16 @@
 // with its highest power, all coefficients(in order from highest power to lowest power),
 // and any remainders it might have.
 pub struct Poly {
-    power: usize,
     values: Vec<i64>,
-    rem: Option<(Box<Poly>, Box<Poly>)>,
 }
 
 impl Poly {
     // Creates new Poly from i64 slice
     fn new(coeff: Vec<i64>) -> Self {
         if coeff.len() == 0 {
-            Poly {
-                power: coeff.len(),
-                values: vec![0],
-                rem: None,
-            }
+            Poly { values: vec![0] }
         } else {
-            Poly {
-                power: coeff.len(),
-                values: coeff,
-                rem: None,
-            }
-            .remove_trail()
+            Poly { values: coeff }.remove_trail()
         }
     }
     // Removes trailing zeros, so that the polynomials don't end up like 0x^7+0x^6... ...+15
@@ -37,11 +26,7 @@ impl Poly {
             .skip_while(|&x| x == 0)
             .collect();
         values.reverse();
-        Poly {
-            power: values.len(),
-            values,
-            rem: None,
-        }
+        Poly { values }
     }
 }
 
@@ -52,7 +37,7 @@ impl std::ops::Add for Poly {
     fn add(self, poly2: Poly) -> Self {
         let mut higher;
         let lower;
-        if self.power > poly2.power {
+        if self.values.len() > poly2.values.len() {
             higher = self;
             lower = poly2;
         } else {
@@ -76,7 +61,7 @@ impl std::ops::Sub for Poly {
         let h_first;
         let mut higher;
         let mut lower;
-        if self.power >= poly2.power {
+        if self.values.len() >= poly2.values.len() {
             higher = self;
             lower = poly2;
             h_first = true;
@@ -102,7 +87,7 @@ impl std::ops::Mul for Poly {
     type Output = Self;
 
     fn mul(self, poly2: Poly) -> Self {
-        let new_power = self.power + poly2.power - 1;
+        let new_power = self.values.len() + poly2.values.len() - 1;
         // Allocate a new vec of the required length
         let mut accum = vec![0; new_power];
         // Loops through both vecs and mults them(added to the stuff already in there)
@@ -122,7 +107,9 @@ mod tests {
     #[test]
     fn add_works() {
         assert_eq!(
-            (Poly::new(vec![3, 2, 1]) + Poly::new(vec![4, 3, 2, 1])).power,
+            (Poly::new(vec![3, 2, 1]) + Poly::new(vec![4, 3, 2, 1]))
+                .values
+                .len(),
             4
         );
     }
@@ -136,7 +123,9 @@ mod tests {
     #[test]
     fn sub_works() {
         assert_eq!(
-            (Poly::new(vec![3, 2, 1]) - Poly::new(vec![4, 3, 2, 1])).power,
+            (Poly::new(vec![3, 2, 1]) - Poly::new(vec![4, 3, 2, 1]))
+                .values
+                .len(),
             4
         );
     }
@@ -159,7 +148,7 @@ mod tests {
     #[test]
     fn new_works() {
         let tvec = vec![1, 2, 3, 4, 5];
-        assert_eq!(Poly::new(tvec).power, 5);
+        assert_eq!(Poly::new(tvec).values.len(), 5);
     }
 
     #[test]
@@ -176,7 +165,7 @@ mod tests {
     #[test]
     fn mul_works() {
         let tvec = vec![1, 2, 3];
-        assert_eq!((Poly::new(tvec.clone()) * Poly::new(tvec)).power, 5);
+        assert_eq!((Poly::new(tvec.clone()) * Poly::new(tvec)).values.len(), 5);
     }
 
     #[test]
