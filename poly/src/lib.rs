@@ -1,6 +1,7 @@
 // Struct that represents a polynomial
 // with its highest power, all coefficients(in order from highest power to lowest power),
 // and any remainders it might have.
+#[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Poly {
     values: Vec<i64>,
 }
@@ -160,6 +161,17 @@ mod tests {
     fn new_works3() {
         let tvec = Vec::new();
         assert_eq!(Poly::new(tvec).values, vec![0]);
+    }
+
+    #[test]
+    fn add_zero_leaves_result_unchanged() {
+        // f(x) = 0;
+        let p1 = Poly::new(vec![0]);
+        // f(x) = x;
+        let p2 = Poly::new(vec![0, 1]);
+        let p3 = p1 + p2.clone();
+        assert_eq!(p3, p2);
+
     }
 
     #[test]
