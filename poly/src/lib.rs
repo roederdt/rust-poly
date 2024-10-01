@@ -9,7 +9,7 @@ pub struct Poly {
 
 impl Poly {
     // Creates new Poly from Rational64 vector
-    fn new(coeffs: Vec<Rational64>) -> Self {
+    pub fn new(coeffs: Vec<Rational64>) -> Self {
         if coeffs.len() == 0 {
             Poly {
                 values: vec![Rational64::from_integer(0)],
@@ -19,7 +19,7 @@ impl Poly {
         }
     }
 
-    fn from_integer_slice(coeffs: Vec<i64>) -> Self {
+    pub fn from_integer_slice(coeffs: Vec<i64>) -> Self {
         Poly::new(
             coeffs
                 .into_iter()
@@ -121,7 +121,7 @@ impl std::ops::Div for Poly {
         let dividend = self.values;
         let divisor = poly2.values;
         for x in (0..dividend.len()).rev() {}
-        unimplemented!("Do this!!!!!")
+        unimplemented!("Do this!!!!!");
     }
 }
 
@@ -221,5 +221,15 @@ mod tests {
             (Poly::from_integer_slice(tvec.clone()) * Poly::from_integer_slice(tvec)),
             Poly::from_integer_slice(vec![1, 4, 10, 12, 9])
         );
+    }
+
+    #[test]
+    fn add_to_just_zero() {
+        assert_eq!(
+            (Poly::from_integer_slice(vec![-5]) + Poly::from_integer_slice(vec![5]))
+                .values
+                .len(),
+            1
+        )
     }
 }
