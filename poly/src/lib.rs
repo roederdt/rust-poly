@@ -1,30 +1,43 @@
+use num::rational::Rational64;
 // Struct that represents a polynomial
 // with its highest power, all coefficients(in order from highest power to lowest power),
 // and any remainders it might have.
 #[derive(Clone, Debug, PartialEq, Eq)]
 pub struct Poly {
-    values: Vec<i64>,
+    values: Vec<Rational64>,
 }
 
 impl Poly {
-    // Creates new Poly from i64 slice
-    fn new(coeff: Vec<i64>) -> Self {
-        if coeff.len() == 0 {
-            Poly { values: vec![0] }
+    // Creates new Poly from Rational64 vector
+    fn new(coeffs: Vec<Rational64>) -> Self {
+        if coeffs.len() == 0 {
+            Poly {
+                values: vec![Rational64::from_integer(0)],
+            }
         } else {
-            Poly { values: coeff }.remove_trail()
+            Poly { values: coeffs }.remove_trail()
         }
     }
+
+    fn from_integer_slice(coeffs: Vec<i64>) -> Self {
+        Poly::new(
+            coeffs
+                .into_iter()
+                .map(|x| Rational64::from_integer(x))
+                .collect::<Vec<Rational64>>(),
+        )
+    }
+
     // Removes trailing zeros, so that the polynomials don't end up like 0x^7+0x^6... ...+15
     fn remove_trail(self) -> Self {
         if self.values.len() == 1 {
             return self;
         }
-        let mut values: Vec<i64> = self
+        let mut values: Vec<Rational64> = self
             .values
             .into_iter()
             .rev()
-            .skip_while(|&x| x == 0)
+            .skip_while(|&x| x == Rational64::from_integer(0))
             .collect();
         values.reverse();
         Poly { values }
@@ -61,7 +74,7 @@ impl std::ops::Sub for Poly {
     fn sub(self, poly2: Poly) -> Self {
         let h_first;
         let mut higher;
-        let mut lower;
+        let lower;
         if self.values.len() >= poly2.values.len() {
             higher = self;
             lower = poly2;
@@ -74,9 +87,9 @@ impl std::ops::Sub for Poly {
 
         for x in 0..higher.values.len() {
             higher.values[x] = if h_first {
-                higher.values[x] - lower.values.get(x).unwrap_or(&0)
+                higher.values[x] - lower.values.get(x).unwrap_or(&Rational64::from_integer(0))
             } else {
-                lower.values.get(x).unwrap_or(&0) - higher.values[x]
+                lower.values.get(x).unwrap_or(&Rational64::from_integer(0)) - higher.values[x]
             };
         }
 
@@ -90,7 +103,7 @@ impl std::ops::Mul for Poly {
     fn mul(self, poly2: Poly) -> Self {
         let new_power = self.values.len() + poly2.values.len() - 1;
         // Allocate a new vec of the required length
-        let mut accum = vec![0; new_power];
+        let mut accum = vec![Rational64::from_integer(0); new_power];
         // Loops through both vecs and mults them(added to the stuff already in there)
         for x in 0..self.values.len() {
             for y in 0..poly2.values.len() {
@@ -104,10 +117,11 @@ impl std::ops::Mul for Poly {
 impl std::ops::Div for Poly {
     type Output = (Self, Self);
 
-    fn div(self, poly2: Poly) -> (Self, Self) {
+    fn div(self, poly2: Poly) -> Self::Output {
         let dividend = self.values;
         let divisor = poly2.values;
-        for x in (0..self.values.len()).rev() {}
+        for x in (0..dividend.len()).rev() {}
+        unimplemented!("Do this!!!!!")
     }
 }
 
@@ -118,7 +132,7 @@ mod tests {
     #[test]
     fn add_works() {
         assert_eq!(
-            (Poly::new(vec![3, 2, 1]) + Poly::new(vec![4, 3, 2, 1]))
+            (Poly::from_integer_slice(vec![3, 2, 1]) + Poly::from_integer_slice(vec![4, 3, 2, 1]))
                 .values
                 .len(),
             4
@@ -127,14 +141,14 @@ mod tests {
     #[test]
     fn add_works2() {
         assert_eq!(
-            (Poly::new(vec![3, 2, 1]) + Poly::new(vec![4, 3, 2, 1])).values,
-            vec![7, 5, 3, 1]
+            (Poly::from_integer_slice(vec![3, 2, 1]) + Poly::from_integer_slice(vec![4, 3, 2, 1])),
+            Poly::from_integer_slice(vec![7, 5, 3, 1])
         );
     }
     #[test]
     fn sub_works() {
         assert_eq!(
-            (Poly::new(vec![3, 2, 1]) - Poly::new(vec![4, 3, 2, 1]))
+            (Poly::from_integer_slice(vec![3, 2, 1]) - Poly::from_integer_slice(vec![4, 3, 2, 1]))
                 .values
                 .len(),
             4
@@ -143,59 +157,69 @@ mod tests {
     #[test]
     fn sub_works2() {
         assert_eq!(
-            (Poly::new(vec![4, 2, 1]) - Poly::new(vec![4, 3, 2, 1])).values,
-            vec![0, -1, -1, -1]
+            (Poly::from_integer_slice(vec![4, 2, 1]) - Poly::from_integer_slice(vec![4, 3, 2, 1])),
+            Poly::from_integer_slice(vec![0, -1, -1, -1])
         );
     }
 
     #[test]
     fn a_b_works() {
         assert_eq!(
-            (Poly::new(vec![4, 2, 1]) - Poly::new(vec![4, 3, 2, 1]) + Poly::new(vec![4, 3, 2, 1]))
-                .values,
-            vec![4, 2, 1]
+            (Poly::from_integer_slice(vec![4, 2, 1]) - Poly::from_integer_slice(vec![4, 3, 2, 1])
+                + Poly::from_integer_slice(vec![4, 3, 2, 1])),
+            Poly::from_integer_slice(vec![4, 2, 1])
         );
     }
     #[test]
     fn new_works() {
         let tvec = vec![1, 2, 3, 4, 5];
-        assert_eq!(Poly::new(tvec).values.len(), 5);
+        assert_eq!(Poly::from_integer_slice(tvec).values.len(), 5);
     }
 
     #[test]
     fn new_works2() {
         let tvec = vec![1, 2, 3, 4, 5];
-        assert_eq!(Poly::new(tvec).values, vec![1, 2, 3, 4, 5]);
+        assert_eq!(
+            Poly::from_integer_slice(tvec),
+            Poly::from_integer_slice(vec![1, 2, 3, 4, 5])
+        );
     }
     #[test]
     fn new_works3() {
         let tvec = Vec::new();
-        assert_eq!(Poly::new(tvec).values, vec![0]);
+        assert_eq!(
+            Poly::from_integer_slice(tvec),
+            Poly::from_integer_slice(vec![0])
+        );
     }
 
     #[test]
     fn add_zero_leaves_result_unchanged() {
         // f(x) = 0;
-        let p1 = Poly::new(vec![0]);
+        let p1 = Poly::from_integer_slice(vec![0]);
         // f(x) = x;
-        let p2 = Poly::new(vec![0, 1]);
+        let p2 = Poly::from_integer_slice(vec![0, 1]);
         let p3 = p1 + p2.clone();
         assert_eq!(p3, p2);
-
     }
 
     #[test]
     fn mul_works() {
         let tvec = vec![1, 2, 3];
-        assert_eq!((Poly::new(tvec.clone()) * Poly::new(tvec)).values.len(), 5);
+        assert_eq!(
+            (Poly::from_integer_slice(tvec.clone()) * Poly::from_integer_slice(tvec))
+                .values
+                .len(),
+            5
+        );
     }
 
     #[test]
     fn mul_works2() {
         let tvec = vec![1, 2, 3];
         assert_eq!(
-            (Poly::new(tvec.clone()) * Poly::new(tvec)).values,
-            vec![1, 4, 10, 12, 9]
+            (Poly::from_integer_slice(tvec.clone()) * Poly::from_integer_slice(tvec)),
+            Poly::from_integer_slice(vec![1, 4, 10, 12, 9])
         );
     }
 }
