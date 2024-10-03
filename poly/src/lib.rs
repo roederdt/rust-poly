@@ -2,11 +2,16 @@ use num::rational::Rational64;
 // Struct that represents a polynomial
 // with its highest power, all coefficients(in order from highest power to lowest power),
 // and any remainders it might have.
-#[derive(Clone, Debug, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq)]
 pub struct Poly {
     values: Vec<Rational64>,
 }
-
+fn display_rat64(rat: &Rational64) -> String {
+    if rat.is_integer() {
+        return format!("{}", rat.to_integer());
+    }
+    format!("{}/{}", rat.numer(), rat.denom())
+}
 impl Poly {
     // Creates new Poly from Rational64 vector
     pub fn new(coeffs: Vec<Rational64>) -> Self {
@@ -30,9 +35,6 @@ impl Poly {
 
     // Removes trailing zeros, so that the polynomials don't end up like 0x^7+0x^6... ...+15
     fn remove_trail(self) -> Self {
-        if self.values.len() == 1 {
-            return self;
-        }
         let mut values: Vec<Rational64> = self
             .values
             .into_iter()
@@ -40,7 +42,49 @@ impl Poly {
             .skip_while(|&x| x == Rational64::from_integer(0))
             .collect();
         values.reverse();
+
+        if values.len() == 0 {
+            values.push(Rational64::from_integer(0));
+        }
+
         Poly { values }
+    }
+}
+
+impl std::fmt::Debug for Poly {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        for i in (1..self.values.len()).rev() {
+            write!(f, "{}x^{}+", display_rat64(&self.values[i]), i)?;
+        }
+        write!(f, "{}x^{}", display_rat64(&self.values[0]), 0)?;
+        Ok(())
+    }
+}
+
+impl std::fmt::Display for Poly {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        let mut t: Vec<(Rational64, usize)> = Vec::new();
+        for i in 0..self.values.len() {
+            if self.values[i] != Rational64::from_integer(0) {
+                t.push((self.values[i], i));
+            }
+        }
+        if t.len() == 0 {
+            t.push((Rational64::from_integer(0), 0));
+        }
+        for i in (1..t.len()).rev() {
+            if t[i].1 == 1 {
+                write!(f, "{}x+", display_rat64(&t[i].0))?;
+            } else {
+                write!(f, "{}x^{}+", display_rat64(&t[i].0), t[i].1)?;
+            }
+        }
+        match t[0].1 {
+            0 => write!(f, "{}", display_rat64(&t[0].0))?,
+            1 => write!(f, "{}", display_rat64(&t[0].0))?,
+            _ => write!(f, "{}x^{}", display_rat64(&t[0].0), t[0].1)?,
+        }
+        Ok(())
     }
 }
 
@@ -124,8 +168,11 @@ impl std::ops::Div for Poly {
         if (divisor.len() == 0) || (dividend[dividend.len() - 1] == Rational64::from_integer(0)) {
             panic!("Division by zero error");
         }
+        if dividend.len() < divisor.len() {
+            return (Poly::from_integer_slice(vec![0]), Poly::new(dividend));
+        }
         let mut temp: Vec<Rational64> =
-            vec![Rational64::from_integer(0); dividend.len() - div_len + 1];
+            vec![Rational64::from_integer(0); dividend.len() + 1 - div_len];
         let mut t;
 
         for x in ((div_len - 1)..dividend.len()).rev() {
@@ -266,6 +313,80 @@ mod tests {
                 Poly::from_integer_slice(vec![3, 1, 1]),
                 Poly::from_integer_slice(vec![5])
             )
+        );
+    }
+
+    #[test]
+    fn div_by_longer_poly() {
+        assert_eq!(
+            (Poly::from_integer_slice(vec![4, 0, 0, 1])
+                / Poly::from_integer_slice(vec![6, 0, 0, 0, 0, 0, 0, 1])),
+            (
+                Poly::from_integer_slice(vec![0]),
+                Poly::from_integer_slice(vec![4, 0, 0, 1])
+            )
+        );
+    }
+
+    #[test]
+    fn div_by_equal_len() {
+        // x^3 + 4 = (x^3 + 6) * 1 - 2
+        assert_eq!(
+            (Poly::from_integer_slice(vec![4, 0, 0, 1])
+                / Poly::from_integer_slice(vec![6, 0, 0, 1])),
+            (
+                Poly::from_integer_slice(vec![1]),
+                Poly::from_integer_slice(vec![-2])
+            )
+        );
+    }
+
+    #[test]
+    fn simple_div_by_equal_len() {
+        // x^3 + 4 = (x^3 + 6) * 1 - 2
+        assert_eq!(
+            (Poly::from_integer_slice(vec![8, 0, 0, 2])
+                / Poly::from_integer_slice(vec![4, 0, 0, 1])),
+            (
+                Poly::from_integer_slice(vec![2]),
+                Poly::from_integer_slice(vec![0])
+            )
+        );
+    }
+
+    #[test]
+    fn multiple_zeros_become_one() {
+        let z = Rational64::from_integer(0);
+        assert_eq!(
+            Poly {
+                values: vec![z, z, z, z, z, z, z, z, z, z, z, z]
+            }
+            .remove_trail(),
+            Poly { values: vec![z] }
+        )
+    }
+
+    #[test]
+    fn poly_display() {
+        assert_eq!(
+            format!("{}", Poly::from_integer_slice(vec![1, 2, 3, 4])),
+            String::from("4x^3+3x^2+2x+1")
+        );
+    }
+
+    #[test]
+    fn poly_display_zero() {
+        assert_eq!(
+            format!("{}", Poly::from_integer_slice(vec![0])),
+            String::from("0")
+        );
+    }
+
+    #[test]
+    fn poly_display_with_inner_zeros() {
+        assert_eq!(
+            format!("{}", Poly::from_integer_slice(vec![1, 2, 0, 4, 5])),
+            String::from("5x^4+4x^3+2x+1")
         );
     }
 }
