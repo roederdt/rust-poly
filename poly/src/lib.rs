@@ -120,21 +120,23 @@ impl std::ops::Div for Poly {
     fn div(self, poly2: Poly) -> Self::Output {
         let mut dividend = self.values;
         let divisor = poly2.values;
-        if (dividend.len() == 0) || (dividend[dividend.len() - 1] == Rational64::from_integer(0)) {
-            panic!("");
-        }
         let div_len = divisor.len();
+        if (divisor.len() == 0) || (dividend[dividend.len() - 1] == Rational64::from_integer(0)) {
+            panic!("Division by zero error");
+        }
         let mut temp: Vec<Rational64> =
             vec![Rational64::from_integer(0); dividend.len() - div_len + 1];
         let mut t;
 
-        for x in (div_len..dividend.len()).rev() {
-            t = dividend[x] / divisor[div_len - 1];
-            temp[x - div_len + 1] = t;
+        for x in ((div_len - 1)..dividend.len()).rev() {
+            dbg!(x);
+            t = dbg!(dividend[x]) / divisor[div_len - 1];
+            temp[x + 1 - div_len] = dbg!(t);
             for y in 0..div_len {
-                dividend[x - y] -= t * divisor[div_len - y - 1];
+                dividend[x - y] -= dbg!(t * dbg!(divisor[div_len - y - 1]));
             }
         }
+
         (Poly::new(temp), Poly::new(dividend))
     }
 }
@@ -259,8 +261,11 @@ mod tests {
     #[test]
     fn div_works2() {
         assert_eq!(
-            (Poly::from_integer_slice(vec![0, 1, 2, 3]) / Poly::from_integer_slice(vec![0, 1])).0,
-            Poly::from_integer_slice(vec![1, 2, 3])
+            (Poly::from_integer_slice(vec![-4, 0, -2, 1]) / Poly::from_integer_slice(vec![-3, 1])),
+            (
+                Poly::from_integer_slice(vec![3, 1, 1]),
+                Poly::from_integer_slice(vec![5])
+            )
         );
     }
 }
