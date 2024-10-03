@@ -165,7 +165,7 @@ impl std::ops::Div for Poly {
         let mut dividend = self.values;
         let divisor = poly2.values;
         let div_len = divisor.len();
-        if (divisor.len() == 0) || (dividend[dividend.len() - 1] == Rational64::from_integer(0)) {
+        if (div_len == 0) || (divisor[div_len - 1] == Rational64::from_integer(0)) {
             panic!("Division by zero error");
         }
         if dividend.len() < divisor.len() {
@@ -176,11 +176,10 @@ impl std::ops::Div for Poly {
         let mut t;
 
         for x in ((div_len - 1)..dividend.len()).rev() {
-            dbg!(x);
-            t = dbg!(dividend[x]) / divisor[div_len - 1];
-            temp[x + 1 - div_len] = dbg!(t);
+            t = dividend[x] / divisor[div_len - 1];
+            temp[x + 1 - div_len] = t;
             for y in 0..div_len {
-                dividend[x - y] -= dbg!(t * dbg!(divisor[div_len - y - 1]));
+                dividend[x - y] -= t * divisor[div_len - y - 1];
             }
         }
 
@@ -364,6 +363,22 @@ mod tests {
             .remove_trail(),
             Poly { values: vec![z] }
         )
+    }
+
+    #[test]
+    #[should_panic(expected = "Division by zero error")]
+    fn div_by_zero_panic() {
+        let _ = Poly::from_integer_slice(vec![4, 0, 0, 1]) / Poly::from_integer_slice(vec![0]);
+    }
+
+    #[test]
+    #[should_panic(expected = "Division by zero error")]
+    fn div_by_zero_panic_wrong_constuctor() {
+        let x = Rational64::from_integer(0);
+        let _ = Poly::from_integer_slice(vec![4, 0, 0, 1])
+            / Poly {
+                values: vec![x, x, x],
+            };
     }
 
     #[test]
