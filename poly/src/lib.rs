@@ -211,6 +211,15 @@ mod tests {
             Poly::from_integer_slice(vec![7, 5, 3, 1])
         );
     }
+
+    #[test]
+    fn add_zero() {
+        assert_eq!(
+            (Poly::from_integer_slice(vec![3, 2, 1]) + Poly::from_integer_slice(vec![0])),
+            Poly::from_integer_slice(vec![3, 2, 1])
+        );
+    }
+
     #[test]
     fn check_sub_len() {
         assert_eq!(
@@ -225,6 +234,14 @@ mod tests {
         assert_eq!(
             (Poly::from_integer_slice(vec![4, 2, 1]) - Poly::from_integer_slice(vec![4, 3, 2, 1])),
             Poly::from_integer_slice(vec![0, -1, -1, -1])
+        );
+    }
+
+    #[test]
+    fn sub_zero() {
+        assert_eq!(
+            (Poly::from_integer_slice(vec![3, 2, 1]) - Poly::from_integer_slice(vec![0])),
+            Poly::from_integer_slice(vec![3, 2, 1])
         );
     }
 
