@@ -192,7 +192,7 @@ mod tests {
     use super::*;
 
     #[test]
-    fn add_works() {
+    fn check_add_len() {
         assert_eq!(
             (Poly::from_integer_slice(vec![3, 2, 1]) + Poly::from_integer_slice(vec![4, 3, 2, 1]))
                 .values
@@ -201,14 +201,14 @@ mod tests {
         );
     }
     #[test]
-    fn add_works2() {
+    fn check_add_exact() {
         assert_eq!(
             (Poly::from_integer_slice(vec![3, 2, 1]) + Poly::from_integer_slice(vec![4, 3, 2, 1])),
             Poly::from_integer_slice(vec![7, 5, 3, 1])
         );
     }
     #[test]
-    fn sub_works() {
+    fn check_sub_len() {
         assert_eq!(
             (Poly::from_integer_slice(vec![3, 2, 1]) - Poly::from_integer_slice(vec![4, 3, 2, 1]))
                 .values
@@ -217,7 +217,7 @@ mod tests {
         );
     }
     #[test]
-    fn sub_works2() {
+    fn check_sub_exact() {
         assert_eq!(
             (Poly::from_integer_slice(vec![4, 2, 1]) - Poly::from_integer_slice(vec![4, 3, 2, 1])),
             Poly::from_integer_slice(vec![0, -1, -1, -1])
@@ -225,7 +225,7 @@ mod tests {
     }
 
     #[test]
-    fn a_b_works() {
+    fn add_then_sub_is_same() {
         assert_eq!(
             (Poly::from_integer_slice(vec![4, 2, 1]) - Poly::from_integer_slice(vec![4, 3, 2, 1])
                 + Poly::from_integer_slice(vec![4, 3, 2, 1])),
@@ -233,13 +233,13 @@ mod tests {
         );
     }
     #[test]
-    fn new_works() {
+    fn check_new_len() {
         let tvec = vec![1, 2, 3, 4, 5];
         assert_eq!(Poly::from_integer_slice(tvec).values.len(), 5);
     }
 
     #[test]
-    fn new_works2() {
+    fn check_new_exact() {
         let tvec = vec![1, 2, 3, 4, 5];
         assert_eq!(
             Poly::from_integer_slice(tvec),
@@ -247,7 +247,7 @@ mod tests {
         );
     }
     #[test]
-    fn new_works3() {
+    fn check_new_when_empty() {
         let tvec = Vec::new();
         assert_eq!(
             Poly::from_integer_slice(tvec),
@@ -266,7 +266,7 @@ mod tests {
     }
 
     #[test]
-    fn mul_works() {
+    fn check_mul_len() {
         let tvec = vec![1, 2, 3];
         assert_eq!(
             (Poly::from_integer_slice(tvec.clone()) * Poly::from_integer_slice(tvec))
@@ -277,7 +277,7 @@ mod tests {
     }
 
     #[test]
-    fn mul_works2() {
+    fn check_mul_exact() {
         let tvec = vec![1, 2, 3];
         assert_eq!(
             (Poly::from_integer_slice(tvec.clone()) * Poly::from_integer_slice(tvec)),
@@ -295,7 +295,7 @@ mod tests {
         );
     }
     #[test]
-    fn div_works() {
+    fn check_div_len() {
         assert_eq!(
             (Poly::from_integer_slice(vec![0, 1, 2, 3]) / Poly::from_integer_slice(vec![0, 1]))
                 .0
@@ -305,7 +305,7 @@ mod tests {
         );
     }
     #[test]
-    fn div_works2() {
+    fn check_div_exact() {
         assert_eq!(
             (Poly::from_integer_slice(vec![-4, 0, -2, 1]) / Poly::from_integer_slice(vec![-3, 1])),
             (
@@ -402,6 +402,14 @@ mod tests {
         assert_eq!(
             format!("{}", Poly::from_integer_slice(vec![1, 2, 0, 4, 5])),
             String::from("5x^4+4x^3+2x+1")
+        );
+    }
+
+    #[test]
+    fn poly_debug() {
+        assert_eq!(
+            format!("{}", Poly::from_integer_slice(vec![1, 2, 3, 4])),
+            String::from("4x^3+3x^2+2x+1")
         );
     }
 }
