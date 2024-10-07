@@ -53,10 +53,13 @@ impl Poly {
 
 impl std::fmt::Debug for Poly {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        for i in (1..self.values.len()).rev() {
+        for i in (2..self.values.len()).rev() {
             write!(f, "{}x^{} + ", display_rat64(&self.values[i]), i)?;
         }
-        write!(f, "{}x^{}", display_rat64(&self.values[0]), 0)?;
+        if self.values.len() >= 2 {
+            write!(f, "{}x + ", display_rat64(&self.values[1]))?;
+        }
+        write!(f, "{}", display_rat64(&self.values[0]))?;
         Ok(())
     }
 }
@@ -418,7 +421,7 @@ mod tests {
     fn poly_debug() {
         assert_eq!(
             format!("{:?}", Poly::from_integer_slice(vec![1, 2, 3, 4])),
-            String::from("4x^3 + 3x^2 + 2x^1 + 1x^0")
+            String::from("4x^3 + 3x^2 + 2x + 1")
         );
     }
 
@@ -426,7 +429,15 @@ mod tests {
     fn poly_debug_with_zeros_in_middle() {
         assert_eq!(
             format!("{:?}", Poly::from_integer_slice(vec![1, 0, 0, 0, 4, 5, 6])),
-            String::from("6x^6 + 5x^5 + 4x^4 + 0x^3 + 0x^2 + 0x^1 + 1x^0")
+            String::from("6x^6 + 5x^5 + 4x^4 + 0x^3 + 0x^2 + 0x + 1")
+        );
+    }
+
+    #[test]
+    fn poly_debug_with_zero_at_end() {
+        assert_eq!(
+            format!("{:?}", Poly::from_integer_slice(vec![0, 0, 0, 0, 4, 5, 6])),
+            String::from("6x^6 + 5x^5 + 4x^4 + 0x^3 + 0x^2 + 0x + 0")
         );
     }
 }
