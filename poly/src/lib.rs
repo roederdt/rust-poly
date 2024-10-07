@@ -81,7 +81,7 @@ impl std::fmt::Display for Poly {
         }
         match t[0].1 {
             0 => write!(f, "{}", display_rat64(&t[0].0))?,
-            1 => write!(f, "{}", display_rat64(&t[0].0))?,
+            1 => write!(f, "{}x", display_rat64(&t[0].0))?,
             _ => write!(f, "{}x^{}", display_rat64(&t[0].0), t[0].1)?,
         }
         Ok(())
@@ -402,6 +402,14 @@ mod tests {
         assert_eq!(
             format!("{}", Poly::from_integer_slice(vec![1, 2, 0, 4, 5])),
             String::from("5x^4+4x^3+2x+1")
+        );
+    }
+
+    #[test]
+    fn poly_display_with_no_zero_term() {
+        assert_eq!(
+            format!("{}", Poly::from_integer_slice(vec![0, 2, 3, 4])),
+            String::from("4x^3+3x^2+2x")
         );
     }
 
