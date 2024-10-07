@@ -54,7 +54,7 @@ impl Poly {
 impl std::fmt::Debug for Poly {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         for i in (1..self.values.len()).rev() {
-            write!(f, "{}x^{}+", display_rat64(&self.values[i]), i)?;
+            write!(f, "{}x^{} + ", display_rat64(&self.values[i]), i)?;
         }
         write!(f, "{}x^{}", display_rat64(&self.values[0]), 0)?;
         Ok(())
@@ -73,10 +73,11 @@ impl std::fmt::Display for Poly {
             t.push((Rational64::from_integer(0), 0));
         }
         for i in (1..t.len()).rev() {
+            //checks if any of the remaining terms(before the final term) is the x^1 term
             if t[i].1 == 1 {
-                write!(f, "{}x+", display_rat64(&t[i].0))?;
+                write!(f, "{}x + ", display_rat64(&t[i].0))?;
             } else {
-                write!(f, "{}x^{}+", display_rat64(&t[i].0), t[i].1)?;
+                write!(f, "{}x^{} + ", display_rat64(&t[i].0), t[i].1)?;
             }
         }
         match t[0].1 {
@@ -385,7 +386,7 @@ mod tests {
     fn poly_display() {
         assert_eq!(
             format!("{}", Poly::from_integer_slice(vec![1, 2, 3, 4])),
-            String::from("4x^3+3x^2+2x+1")
+            String::from("4x^3 + 3x^2 + 2x + 1")
         );
     }
 
@@ -401,7 +402,7 @@ mod tests {
     fn poly_display_with_inner_zeros() {
         assert_eq!(
             format!("{}", Poly::from_integer_slice(vec![1, 2, 0, 4, 5])),
-            String::from("5x^4+4x^3+2x+1")
+            String::from("5x^4 + 4x^3 + 2x + 1")
         );
     }
 
@@ -409,11 +410,10 @@ mod tests {
     fn poly_display_with_no_zero_term() {
         assert_eq!(
             format!("{}", Poly::from_integer_slice(vec![0, 2, 3, 4])),
-            String::from("4x^3+3x^2+2x")
+            String::from("4x^3 + 3x^2 + 2x")
         );
     }
-
-    #[test]
+    // test not implemented yet
     fn poly_debug() {
         assert_eq!(
             format!("{}", Poly::from_integer_slice(vec![1, 2, 3, 4])),
