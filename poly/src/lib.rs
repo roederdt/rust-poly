@@ -10,7 +10,7 @@ fn display_rat64(rat: &Rational64) -> String {
     if rat.is_integer() {
         return format!("{}", rat.to_integer());
     }
-    format!("{}/{}", rat.numer(), rat.denom())
+    format!("({}/{})", rat.numer(), rat.denom())
 }
 impl Poly {
     // Creates new Poly from Rational64 vector
@@ -464,6 +464,19 @@ mod tests {
         assert_eq!(
             format!("{:?}", Poly::from_integer_slice(vec![0, 0, 0, 0, 4, 5, 6])),
             String::from("6x^6 + 5x^5 + 4x^4 + 0x^3 + 0x^2 + 0x + 0")
+        );
+    }
+
+    #[test]
+    fn poly_display_with_frac() {
+        let tvec = vec![
+            Rational64::from_integer(1),
+            Rational64::from_integer(2),
+            Rational64::new(5, 3),
+        ];
+        assert_eq!(
+            format!("{:?}", Poly::new(tvec)),
+            String::from("(5/3)x^2 + 2x + 1")
         );
     }
 }
