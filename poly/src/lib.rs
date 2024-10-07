@@ -290,6 +290,15 @@ mod tests {
     }
 
     #[test]
+    fn mul_by_zero() {
+        let tvec = vec![1, 2, 3];
+        assert_eq!(
+            (Poly::from_integer_slice(tvec) * Poly::from_integer_slice(vec![0])),
+            Poly::from_integer_slice(vec![0])
+        );
+    }
+
+    #[test]
     fn add_to_just_zero() {
         assert_eq!(
             (Poly::from_integer_slice(vec![-5]) + Poly::from_integer_slice(vec![5]))
