@@ -413,11 +413,20 @@ mod tests {
             String::from("4x^3 + 3x^2 + 2x")
         );
     }
-    // test not implemented yet
+
+    #[test]
     fn poly_debug() {
         assert_eq!(
-            format!("{}", Poly::from_integer_slice(vec![1, 2, 3, 4])),
-            String::from("4x^3+3x^2+2x+1")
+            format!("{:?}", Poly::from_integer_slice(vec![1, 2, 3, 4])),
+            String::from("4x^3 + 3x^2 + 2x^1 + 1x^0")
+        );
+    }
+
+    #[test]
+    fn poly_debug_with_zeros_in_middle() {
+        assert_eq!(
+            format!("{:?}", Poly::from_integer_slice(vec![1, 0, 0, 0, 4, 5, 6])),
+            String::from("6x^6 + 5x^5 + 4x^4 + 0x^3 + 0x^2 + 0x^1 + 1x^0")
         );
     }
 }
