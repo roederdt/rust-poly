@@ -6,7 +6,7 @@ use num::rational::Rational64;
 pub struct Poly {
     values: Vec<Rational64>,
 }
-fn display_rat64(rat: &Rational64) -> String {
+pub fn display_rat64(rat: &Rational64) -> String {
     if rat.is_integer() {
         return format!("{}", rat.to_integer());
     }
