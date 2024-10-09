@@ -1,3 +1,5 @@
+mod euclidean;
+
 use num::rational::Rational64;
 // Struct that represents a polynomial
 // with its highest power, all coefficients(in order from highest power to lowest power),
@@ -49,8 +51,14 @@ impl Poly {
 
         Poly { values }
     }
+    fn normalize(self) -> Self {
+        let mut nself = self;
+        for i in 0..nself.values.len() {
+            nself.values[i] = nself.values[i] / nself.values[nself.values.len() - 1];
+        }
+        return nself;
+    }
 }
-
 impl std::fmt::Debug for Poly {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         for i in (2..self.values.len()).rev() {
