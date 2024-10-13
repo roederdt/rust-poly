@@ -4,12 +4,12 @@ pub fn euclidean(poly1: &Poly, poly2: &Poly) -> (Poly, Poly, Poly) {
     let mut remainder_new = poly2.clone();
     let mut quotient: Poly;
     let (mut s_old, mut s_new) = (
-        Poly::from_integer_slice(vec![0]),
         Poly::from_integer_slice(vec![1]),
+        Poly::from_integer_slice(vec![0]),
     );
     let (mut t_old, mut t_new) = (
-        Poly::from_integer_slice(vec![1]),
         Poly::from_integer_slice(vec![0]),
+        Poly::from_integer_slice(vec![1]),
     );
     let mut temp;
     while remainder_new != Poly::from_integer_slice(vec![0]) {
