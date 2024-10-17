@@ -58,6 +58,20 @@ impl Poly {
         }
         return nself;
     }
+    pub fn leading_coeff(self) -> Rational64 {
+        if self.values.len() == 0 {
+            return Rational64::new(0, 1);
+        }
+        self.values[0]
+    }
+
+    pub fn normalize_from_value(self, value: Rational64) -> Poly {
+        let mut nself = self;
+        for i in 0..nself.values.len() {
+            nself.values[i] = nself.values[i] / value;
+        }
+        return nself;
+    }
 }
 impl std::fmt::Debug for Poly {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
