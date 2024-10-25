@@ -76,8 +76,7 @@ impl<
     }
 
     pub fn inv_mod(self, poly2: Poly<T>) -> Poly<T> {
-        let (_rem, s, _t) = euclidean(&self, &poly2);
-        assert_eq!(Poly::new(vec![T::one()]), s.clone() * self);
+        let (s, _t, _rem) = euclidean(&self, &poly2);
         s
     }
 }
@@ -359,6 +358,8 @@ impl<
 
 #[cfg(test)]
 mod tests {
+    use num::One;
+
     use super::*;
 
     #[test]
@@ -654,5 +655,45 @@ mod tests {
             format!("{}", new_from_slice(&vec![7, 0xf])),
             String::from("x^11 + x^10 + x^9 + x^8 + x^2 + x + 1")
         );
+    }
+
+    #[test]
+    fn irred_poly_for_inv_test() {
+        assert_eq!(
+            format!("{}", new_from_slice(&vec![0x13])),
+            String::from("x^4 + x + 1")
+        );
+    }
+
+    #[test]
+    fn irred_poly_gcd() {
+        let t = new_from_slice(&vec![5]);
+        let irred = new_from_slice(&vec![0x13]);
+        assert!(euclidean(&t, &irred).2.is_one());
+    }
+
+    #[test]
+    fn inv_mod() {
+        let t = new_from_slice(&vec![5]);
+        let irred = new_from_slice(&vec![0x13]);
+        let inv = Poly::inv_mod(t.clone(), irred.clone());
+        assert_eq!(format!("{}", inv), "x^3 + x + 1");
+        assert!(Poly::modulus(inv * t, irred).is_one())
+    }
+
+    #[test]
+    fn inv_mod_gf_2_256() {
+        let t = new_from_slice(&vec![5]);
+        let irred = new_from_slice(&vec![
+            1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 2, 0, 0, 0, 0, 0, 0, 4, 0, 0, 0, 0, 0, 0,
+            0, 2, 0, 1,
+        ]);
+        let inv = Poly::inv_mod(t.clone(), irred.clone());
+        assert_eq!(format!("{}", irred), "x^256 + x^241 + x^178 + x^121 + 1");
+        assert_eq!(
+            format!("{}", inv),
+            "x^254 + x^252 + x^250 + x^248 + x^246 + x^244 + x^242 + x^240 + x^239 + x^238 + x^237 + x^236 + x^235 + x^234 + x^233 + x^232 + x^231 + x^230 + x^229 + x^228 + x^227 + x^226 + x^225 + x^224 + x^223 + x^222 + x^221 + x^220 + x^219 + x^218 + x^217 + x^216 + x^215 + x^214 + x^213 + x^212 + x^211 + x^210 + x^209 + x^208 + x^207 + x^206 + x^205 + x^204 + x^203 + x^202 + x^201 + x^200 + x^199 + x^198 + x^197 + x^196 + x^195 + x^194 + x^193 + x^192 + x^191 + x^190 + x^189 + x^188 + x^187 + x^186 + x^185 + x^184 + x^183 + x^182 + x^181 + x^180 + x^179 + x^178 + x^177 + x^175 + x^173 + x^171 + x^169 + x^167 + x^165 + x^163 + x^161 + x^159 + x^157 + x^155 + x^153 + x^151 + x^149 + x^147 + x^145 + x^143 + x^141 + x^139 + x^137 + x^135 + x^133 + x^131 + x^129 + x^127 + x^125 + x^123 + x^121"
+        );
+        assert!(Poly::modulus(inv * t, irred).is_one())
     }
 }
