@@ -4,6 +4,24 @@ pub enum Z2z {
     One,
 }
 
+impl num::Zero for Z2z {
+    fn zero() -> Self {
+        Z2z::Zero
+    }
+    fn is_zero(&self) -> bool {
+        matches!(self, Z2z::Zero)
+    }
+}
+
+impl num::One for Z2z {
+    fn one() -> Self {
+        Z2z::One
+    }
+    fn is_one(&self) -> bool {
+        matches!(self, Z2z::One)
+    }
+}
+
 impl std::ops::Add for Z2z {
     type Output = Self;
 

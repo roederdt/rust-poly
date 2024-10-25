@@ -86,4 +86,12 @@ name = "poly"
 version = "0.1.0"
 dependencies = [
  "num",
+ "z2z",
+]
+
+[[package]]
+name = "z2z"
+version = "0.1.0"
+dependencies = [
+ "num",
 ]

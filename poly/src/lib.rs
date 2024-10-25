@@ -1,7 +1,7 @@
 mod euclidean;
-
 use euclidean::euclidean;
 use num::rational::Rational64;
+use z2z::Z2z;
 // Struct that represents a polynomial
 // with its highest power, all coefficients(in order from highest power to lowest power),
 // and any remainders it might have.
@@ -103,7 +103,23 @@ impl<T: std::fmt::Display> std::fmt::Debug for Poly<T> {
     }
 }
 
-impl<T: std::fmt::Display + num::Zero + Clone> std::fmt::Display for Poly<T> {
+pub fn new_from_slice(slice: &[u8]) -> Poly<Z2z> {
+    let mut bits: Vec<Z2z> = Vec::new();
+    for x in slice {
+        for offset in 0..8 {
+            let mask = 1 << offset;
+            match x & mask {
+                0 => bits.push(Z2z::Zero),
+                _ => bits.push(Z2z::One),
+            }
+        }
+    }
+    Poly::new(bits)
+}
+
+impl<T: std::fmt::Display + num::Zero + Clone + num::One + PartialEq> std::fmt::Display
+    for Poly<T>
+{
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         let mut t: Vec<(T, usize)> = Vec::new();
         for i in 0..self.values.len() {
@@ -117,15 +133,35 @@ impl<T: std::fmt::Display + num::Zero + Clone> std::fmt::Display for Poly<T> {
         for i in (1..t.len()).rev() {
             //checks if any of the remaining terms(before the final term) is the x^1 term
             if t[i].1 == 1 {
-                write!(f, "{}x + ", t[i].0)?;
+                if t[i].0.is_one() {
+                    write!(f, "x + ")?;
+                } else {
+                    write!(f, "{}x + ", t[i].0)?;
+                }
             } else {
-                write!(f, "{}x^{} + ", t[i].0, t[i].1)?;
+                if t[i].0.is_one() {
+                    write!(f, "x^{} + ", t[i].1)?;
+                } else {
+                    write!(f, "{}x^{} + ", t[i].0, t[i].1)?;
+                }
             }
         }
         match t[0].1 {
             0 => write!(f, "{}", t[0].0)?,
-            1 => write!(f, "{}x", t[0].0)?,
-            _ => write!(f, "{}x^{}", t[0].0, t[0].1)?,
+            1 => {
+                if t[0].0.is_one() {
+                    write!(f, "x")?
+                } else {
+                    write!(f, "{}x", t[0].0)?
+                }
+            }
+            _ => {
+                if t[0].0.is_one() {
+                    write!(f, "x^{}", t[0].1)?
+                } else {
+                    write!(f, "{}x^{}", t[0].0, t[0].1)?
+                }
+            }
         }
         Ok(())
     }
@@ -609,6 +645,14 @@ mod tests {
         assert_eq!(
             format!("{:?}", from_integer_slice(vec![0, 0, 0, 0, 4, 5, 6])),
             String::from("6x^6 + 5x^5 + 4x^4 + 0x^3 + 0x^2 + 0x + 0")
+        );
+    }
+
+    #[test]
+    fn new_from_slice_small() {
+        assert_eq!(
+            format!("{}", new_from_slice(&vec![7, 0xf])),
+            String::from("x^11 + x^10 + x^9 + x^8 + x^2 + x + 1")
         );
     }
 }
