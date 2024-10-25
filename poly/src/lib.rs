@@ -1,5 +1,6 @@
 mod euclidean;
 
+use euclidean::euclidean;
 use num::rational::Rational64;
 // Struct that represents a polynomial
 // with its highest power, all coefficients(in order from highest power to lowest power),
@@ -14,7 +15,9 @@ impl<
             + std::ops::Mul<Output = T>
             + std::ops::Div<Output = T>
             + num::Zero
+            + num::One
             + std::cmp::PartialEq
+            + std::fmt::Display
             + Clone,
     > Poly<T>
 {
@@ -67,14 +70,17 @@ impl<
         }
         return nself;
     }
-}
-// impl<T> num::Zero for Poly<T> {
-//     pub fn is_zero(&self) -> bool {}
 
-//     pub fn zero() -> Self {
-//         return;
-//     }
-// }
+    pub fn modulus(self, poly2: Poly<T>) -> Poly<T> {
+        (self / poly2).1
+    }
+
+    pub fn inv_mod(self, poly2: Poly<T>) -> Poly<T> {
+        let (_rem, s, _t) = euclidean(&self, &poly2);
+        assert_eq!(Poly::new(vec![T::one()]), s.clone() * self);
+        s
+    }
+}
 
 pub fn from_integer_slice(coeffs: Vec<i64>) -> Poly<Rational64> {
     Poly::new(
@@ -132,8 +138,10 @@ impl<
             + std::ops::Mul<Output = T>
             + std::ops::Div<Output = T>
             + num::Zero
+            + num::One
             + std::cmp::PartialEq
-            + Clone,
+            + Clone
+            + std::fmt::Display,
     > std::ops::Add for Poly<T>
 {
     type Output = Poly<T>;
@@ -163,8 +171,10 @@ impl<
             + std::ops::Mul<Output = T>
             + std::ops::Div<Output = T>
             + num::Zero
+            + num::One
             + std::cmp::PartialEq
-            + Clone,
+            + Clone
+            + std::fmt::Display,
     > num::Zero for Poly<T>
 {
     fn zero() -> Self {
@@ -178,6 +188,29 @@ impl<
     }
 }
 
+impl<
+        T: std::ops::Add<Output = T>
+            + std::ops::Sub<Output = T>
+            + std::ops::Mul<Output = T>
+            + std::ops::Div<Output = T>
+            + num::Zero
+            + num::One
+            + std::cmp::PartialEq
+            + std::fmt::Display
+            + Clone,
+    > num::One for Poly<T>
+{
+    fn one() -> Self {
+        Poly::new(vec![T::one()])
+    }
+    fn is_one(&self) -> bool {
+        if self.values[self.values.len() - 1] == T::one() {
+            return true;
+        }
+        false
+    }
+}
+
 //Implements Sub for the Poly
 impl<
         T: std::ops::Add<Output = T>
@@ -185,7 +218,9 @@ impl<
             + std::ops::Mul<Output = T>
             + std::ops::Div<Output = T>
             + num::Zero
+            + num::One
             + std::cmp::PartialEq
+            + std::fmt::Display
             + Clone,
     > std::ops::Sub for Poly<T>
 {
@@ -223,6 +258,8 @@ impl<
             + std::ops::Mul<Output = T>
             + std::ops::Div<Output = T>
             + num::Zero
+            + num::One
+            + std::fmt::Display
             + std::cmp::PartialEq
             + Clone,
     > std::ops::Mul for Poly<T>
@@ -250,6 +287,8 @@ impl<
             + std::ops::Mul<Output = T>
             + std::ops::Div<Output = T>
             + num::Zero
+            + num::One
+            + std::fmt::Display
             + std::cmp::PartialEq
             + Clone,
     > std::ops::Div for Poly<T>
