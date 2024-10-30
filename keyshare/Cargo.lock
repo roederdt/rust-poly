@@ -115,6 +115,7 @@ version = "0.1.0"
 dependencies = [
  "base64",
  "chacha20poly1305",
+ "nn-secret-share",
  "thiserror",
 ]
 
@@ -123,6 +124,14 @@ name = "libc"
 version = "0.2.159"
 source = "registry+https://github.com/rust-lang/crates.io-index"
 checksum = "561d97a539a36e26a9a5fad1ea11a3039a67714694aaa379433e580854bc3dc5"
+
+[[package]]
+name = "nn-secret-share"
+version = "0.1.0"
+dependencies = [
+ "getrandom",
+ "thiserror",
+]
 
 [[package]]
 name = "opaque-debug"
