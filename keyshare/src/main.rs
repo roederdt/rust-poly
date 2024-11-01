@@ -7,7 +7,7 @@ use nn_secret_share;
 use std::fs;
 use std::{env, num::ParseIntError};
 
-#[derive(Debug, thiserror::Error)]
+#[derive(Clone, Debug, thiserror::Error)]
 pub enum Error {
     #[error("Parsing int error {0}")]
     ParsingError(#[from] ParseIntError),
@@ -28,7 +28,7 @@ fn main() -> Result<(), Error> {
         return Err(Error::InvalidArgError);
     }
     let file_path = &args[1];
-    let num_shares = &args[2];
+    let num_shares: usize = args[2].parse()?;
 
     let contents = fs::read_to_string(file_path).expect("Should have been able to read the file");
     let key = ChaCha20Poly1305::generate_key(&mut OsRng);
@@ -38,7 +38,16 @@ fn main() -> Result<(), Error> {
     let ciphertext = cipher.encrypt(&nonce, contents.as_bytes())?;
     let plaintext = cipher.decrypt(&nonce, ciphertext.as_ref())?;
 
-    let enc_keys = nn_secret_share::encode(&key, num_shares.parse()?);
-
+    let enc_keys = nn_secret_share::encode(&key, num_shares);
+    let mut b64_string_list = Vec::new();
+    for i in 0..num_shares {
+        b64_string_list.push(
+            enc_keys
+                .clone()
+                .unwrap_or(vec!["This file could not be read".into()]),
+        );
+    }
+    fs::write("./target/debug/test_example", plaintext).expect("Unable to write file");
+    fs::write("./target/debug/ciphertext_output", ciphertext).expect("Unable to write file");
     Ok(())
 }
