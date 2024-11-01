@@ -21,7 +21,10 @@ impl std::error::Error for Error {}
 pub fn encode(bytes: &[u8], share_c: usize) -> Result<Vec<Vec<u8>>, Error> {
     let mut vec = Vec::new();
     let mut buf = vec![0; bytes.len()];
-    for _ in 0..share_c {
+    if share_c == 0 {
+        return Err(Error);
+    }
+    for _ in 0..share_c - 1 {
         getrandom::getrandom(buf.as_mut_slice())?;
         vec.push(buf.clone());
     }
@@ -74,7 +77,7 @@ mod tests {
     #[test]
     fn decode_returns_original() -> Result<(), Error> {
         let t = [0, 1, 0, 0, 1, 0, 0, 1];
-        let enct = encode(&t, 1)?;
+        let enct = encode(&t, 3)?;
         let dect = decode(&enct)?;
         assert_eq!(t, dect.as_slice());
         Ok(())
@@ -83,7 +86,7 @@ mod tests {
     #[test]
     fn decode_actually_works() -> Result<(), Error> {
         let t = [0, 1, 0, 0, 1, 0, 0, 1];
-        let mut enct = encode(&t, 1)?;
+        let mut enct = encode(&t, 3)?;
         enct[0][0] += 15;
         let dect = decode(&enct)?;
         assert_ne!(t[0], dect.as_slice()[0]);
