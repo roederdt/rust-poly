@@ -94,10 +94,10 @@ fn main() -> Result<(), Error> {
         }
     } else {
         if kind == "decode" {
-            let file_name = &args[3];
-            let num_files = args[4].parse()?;
+            let file_name = &args[2];
+            let num_files = args[3].parse()?;
             let ciphertext =
-                fs::read_to_string(format!("./target/debug/{file_name}/{}", &args[2])).unwrap();
+                fs::read_to_string(format!("./target/debug/{file_name}/ciphertext")).unwrap();
             let nonce = fs::read_to_string(format!("./target/debug/{file_name}/nonce")).unwrap();
             let mut keys_vec = Vec::new();
             let mut temp_file;
