@@ -94,18 +94,17 @@ fn main() -> Result<(), Error> {
         }
     } else {
         if kind == "decode" {
-            let infile = &args[2];
-            let ciphertext = fs::read_to_string(&args[3]).expect(&format!("{infile}")); // derived from in_contents(not done yet)
-            let file_name = &args[4];
-            let num_files = args[5].parse()?;
-            let nonce = fs::read_to_string(format!("./target/debug/{file_name}/nonce"))
-                .expect(&format!("{infile}"));
+            let file_name = &args[3];
+            let num_files = args[4].parse()?;
+            let ciphertext =
+                fs::read_to_string(format!("./target/debug/{file_name}/{}", &args[2])).unwrap();
+            let nonce = fs::read_to_string(format!("./target/debug/{file_name}/nonce")).unwrap();
             let mut keys_vec = Vec::new();
             let mut temp_file;
             for i in 0..num_files {
                 temp_file =
                     fs::read_to_string(format!("./target/debug/{file_name}/{file_name}{i}"))
-                        .expect(&format!("{infile}"));
+                        .unwrap();
                 keys_vec.push(temp_file);
             }
 
