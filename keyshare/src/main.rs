@@ -22,7 +22,6 @@ pub enum Error {
     #[error("UTF8 decode error: {0}")]
     UTF8Error(#[from] std::string::FromUtf8Error),
 }
-
 fn encode(infile: &String, num_shares: usize) -> Result<(String, String, Vec<String>), Error> {
     let in_contents = fs::read_to_string(infile).expect(&format!("{infile}"));
 
@@ -31,7 +30,7 @@ fn encode(infile: &String, num_shares: usize) -> Result<(String, String, Vec<Str
     let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
     let ciphertext = cipher.encrypt(&nonce, in_contents.as_bytes())?;
 
-    let enc_keys = nn_secret_share::encode(&key, num_shares)?;
+    let enc_keys = nn_secret_share::encode(&key.as_ref(), num_shares)?;
     let nonce = BASE64_STANDARD.encode(nonce);
     let ciphertext = BASE64_STANDARD.encode(ciphertext);
 
@@ -63,7 +62,6 @@ fn decode(
 
     Ok(plaintext)
 }
-
 fn main() -> Result<(), Error> {
     let args: Vec<String> = env::args().collect();
 
