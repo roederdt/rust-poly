@@ -79,6 +79,9 @@ fn main() -> Result<(), Error> {
         let outfile = &args[5];
 
         let (nonce, ciphertext, keys_vec) = encode(infile, num_shares)?;
+        if !(fs::exists(format!("./target/debug/{key_name}")).unwrap()) {
+            fs::create_dir(format!("./target/debug/{key_name}")).unwrap();
+        }
         fs::write(format!("./target/debug/{key_name}/nonce"), nonce).expect("Unable to write file");
         fs::write(format!("./target/debug/{key_name}/{outfile}"), ciphertext)
             .expect("Unable to write file");
@@ -92,12 +95,18 @@ fn main() -> Result<(), Error> {
     } else {
         if kind == "decode" {
             let infile = &args[2];
-            let in_contents = fs::read_to_string(infile).expect(&format!("{infile}"));
-            let nonce = args[2].clone(); // derived from in_contents(not done yet)
-            let ciphertext = args[2].clone(); // derived from in_contents(not done yet)
+            let ciphertext = fs::read_to_string(&args[3]).expect(&format!("{infile}")); // derived from in_contents(not done yet)
+            let file_name = &args[4];
+            let num_files = args[5].parse()?;
+            let nonce = fs::read_to_string(format!("./target/debug/{file_name}/nonce"))
+                .expect(&format!("{infile}"));
             let mut keys_vec = Vec::new();
-            for i in 3..args.len() {
-                keys_vec.push(args[i].clone());
+            let mut temp_file;
+            for i in 0..num_files {
+                temp_file =
+                    fs::read_to_string(format!("./target/debug/{file_name}/{file_name}{i}"))
+                        .expect(&format!("{infile}"));
+                keys_vec.push(temp_file);
             }
 
             let plaintext = decode(&nonce, &ciphertext, &keys_vec)?;
