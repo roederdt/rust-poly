@@ -22,8 +22,10 @@ pub enum Error {
     #[error("UTF8 decode error: {0}")]
     UTF8Error(#[from] std::string::FromUtf8Error),
 }
+
 fn encode(infile: &String, num_shares: usize) -> Result<(String, String, Vec<String>), Error> {
     let in_contents = fs::read_to_string(infile).expect(&format!("{infile}"));
+
     let key = ChaCha20Poly1305::generate_key(&mut OsRng);
     let cipher = ChaCha20Poly1305::new(&key);
     let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
@@ -32,6 +34,7 @@ fn encode(infile: &String, num_shares: usize) -> Result<(String, String, Vec<Str
     let enc_keys = nn_secret_share::encode(&key, num_shares)?;
     let nonce = BASE64_STANDARD.encode(nonce);
     let ciphertext = BASE64_STANDARD.encode(ciphertext);
+
     let mut b64_keys_list = Vec::new();
     for i in 0..num_shares {
         b64_keys_list.push(BASE64_STANDARD.encode(enc_keys[i].clone()));
@@ -49,20 +52,19 @@ fn decode(
     for i in 0..b64_keys_list.len() {
         keys_list.push(BASE64_STANDARD.decode(b64_keys_list[i].clone())?);
     }
+
     let nonce = BASE64_STANDARD.decode(nonce)?;
     let ciphertext = BASE64_STANDARD.decode(ciphertext)?;
     let dec_keys = nn_secret_share::decode(&keys_list)?;
-
     let cipher = ChaCha20Poly1305::new(Key::from_slice(&dec_keys));
+
     let plaintext =
         String::from_utf8(cipher.decrypt(Nonce::from_slice(&nonce), ciphertext.as_ref())?)?;
 
     Ok(plaintext)
 }
-fn main() -> Result<(), Error> {
-    assert_eq!(BASE64_STANDARD.decode(b"+uwgVQA=")?, b"\xFA\xEC\x20\x55\0");
-    assert_eq!(BASE64_STANDARD.encode(b"\xFF\xEC\x20\x55\0"), "/+wgVQA=");
 
+fn main() -> Result<(), Error> {
     let args: Vec<String> = env::args().collect();
 
     if args.len() < 2 {
@@ -76,15 +78,17 @@ fn main() -> Result<(), Error> {
         let infile = &args[2];
         let num_shares: usize = args[3].parse()?;
         let key_name = &args[4];
-        let outfile = &args[5];
 
         let (nonce, ciphertext, keys_vec) = encode(infile, num_shares)?;
+
         if !(fs::exists(format!("./target/debug/{key_name}")).unwrap()) {
             fs::create_dir(format!("./target/debug/{key_name}")).unwrap();
         }
+
         fs::write(format!("./target/debug/{key_name}/nonce"), nonce).expect("Unable to write file");
-        fs::write(format!("./target/debug/{key_name}/{outfile}"), ciphertext)
+        fs::write(format!("./target/debug/{key_name}/ciphertext"), ciphertext)
             .expect("Unable to write file");
+
         for i in 0..keys_vec.len() {
             fs::write(
                 format!("./target/debug/{key_name}/{key_name}{i}"),
@@ -96,9 +100,11 @@ fn main() -> Result<(), Error> {
         if kind == "decode" {
             let file_name = &args[2];
             let num_files = args[3].parse()?;
+
             let ciphertext =
                 fs::read_to_string(format!("./target/debug/{file_name}/ciphertext")).unwrap();
             let nonce = fs::read_to_string(format!("./target/debug/{file_name}/nonce")).unwrap();
+
             let mut keys_vec = Vec::new();
             let mut temp_file;
             for i in 0..num_files {
