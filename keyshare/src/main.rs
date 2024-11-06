@@ -106,6 +106,9 @@ fn main() -> Result<(), Error> {
         }
     } else {
         if kind == "decode" {
+            if args.len() != 4 {
+                return Err(Error::InvalidArgError);
+            }
             let file_name = &args[2];
             let num_files = args[3].parse()?;
 
