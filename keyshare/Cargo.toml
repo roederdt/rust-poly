@@ -8,5 +8,5 @@ base64 = "0.22.1"
 chacha20poly1305 = {version = "0.10.1", features = ["std"]}
 thiserror = "1.0.64"
 nn-secret-share = { path = "../nn-secret-share"}
-serde = "1.0.214"
+serde = { version = "1.0.214", features = ["derive"]}
 serde_json = "1.0.132"

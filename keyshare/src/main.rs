@@ -4,6 +4,7 @@ use chacha20poly1305::{
     ChaCha20Poly1305, Key, Nonce,
 };
 use nn_secret_share;
+use serde::{Deserialize, Serialize};
 use std::fs;
 use std::{env, num::ParseIntError};
 
@@ -22,6 +23,12 @@ pub enum Error {
     #[error("UTF8 decode error: {0}")]
     UTF8Error(#[from] std::string::FromUtf8Error),
 }
+#[derive(Serialize, Deserialize)]
+struct CipherIv {
+    ciphertext: String,
+    nonce: String,
+}
+
 fn encode(infile: &String, num_shares: usize) -> Result<(String, String, Vec<String>), Error> {
     let in_contents = fs::read_to_string(infile).expect(&format!("{infile}"));
 
@@ -70,7 +77,7 @@ fn main() -> Result<(), Error> {
     }
     let kind = &args[1];
     if kind == "encode" {
-        if args.len() != 6 {
+        if args.len() != 5 {
             return Err(Error::InvalidArgError);
         }
         let infile = &args[2];
@@ -83,9 +90,12 @@ fn main() -> Result<(), Error> {
             fs::create_dir(format!("./target/debug/{key_name}")).unwrap();
         }
 
-        fs::write(format!("./target/debug/{key_name}/nonce"), nonce).expect("Unable to write file");
-        fs::write(format!("./target/debug/{key_name}/ciphertext"), ciphertext)
-            .expect("Unable to write file");
+        let iv_cipher = CipherIv { nonce, ciphertext };
+        fs::write(
+            format!("./target/debug/{key_name}/cipher_iv"),
+            serde_json::to_string(&iv_cipher).unwrap(),
+        )
+        .expect("Unable to write file");
 
         for i in 0..keys_vec.len() {
             fs::write(
@@ -99,9 +109,13 @@ fn main() -> Result<(), Error> {
             let file_name = &args[2];
             let num_files = args[3].parse()?;
 
-            let ciphertext =
-                fs::read_to_string(format!("./target/debug/{file_name}/ciphertext")).unwrap();
-            let nonce = fs::read_to_string(format!("./target/debug/{file_name}/nonce")).unwrap();
+            let cipher_iv_string =
+                fs::read_to_string(format!("./target/debug/{file_name}/cipher_iv")).unwrap();
+
+            let cipher_iv: CipherIv = serde_json::from_str(&cipher_iv_string).unwrap();
+
+            let nonce = cipher_iv.nonce;
+            let ciphertext = cipher_iv.ciphertext;
 
             let mut keys_vec = Vec::new();
             let mut temp_file;
@@ -113,7 +127,8 @@ fn main() -> Result<(), Error> {
             }
 
             let plaintext = decode(&nonce, &ciphertext, &keys_vec)?;
-            fs::write("./target/debug/plaintext", plaintext).expect("Unable to write file");
+            fs::write("./target/debug/plaintext_testAgain", plaintext)
+                .expect("Unable to write file");
         } else {
             return Err(Error::InvalidArgError);
         }
