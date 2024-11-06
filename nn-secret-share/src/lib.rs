@@ -77,7 +77,7 @@ mod tests {
     #[test]
     fn decode_returns_original() -> Result<(), Error> {
         let t = [0, 1, 0, 0, 1, 0, 0, 1];
-        let enct = encode(&t, 3)?;
+        let enct = encode(&t, 5)?;
         let dect = decode(&enct)?;
         assert_eq!(t, dect.as_slice());
         Ok(())
