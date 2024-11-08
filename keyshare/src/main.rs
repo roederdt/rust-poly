@@ -60,7 +60,7 @@ fn decode(
 ) -> Result<String, Error> {
     let mut keys_list = Vec::new();
     for i in 0..b64_keys_list.len() {
-        keys_list.push(BASE64_STANDARD.decode(&b64_keys_list[i])?);
+        keys_list.push(BASE64_STANDARD.decode(b64_keys_list[i].trim())?);
     }
 
     let nonce = BASE64_STANDARD.decode(nonce)?;
