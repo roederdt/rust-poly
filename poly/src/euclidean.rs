@@ -29,21 +29,16 @@ pub fn euclidean<
             s_new.clone(),
             s_old.clone() - (quotient.clone() * s_new.clone()),
         );
-        dbg!(s_old.clone());
         (t_old, t_new) = (
             t_new.clone(),
             t_old.clone() - (quotient.clone() * t_new.clone()),
         );
-        dbg!(t_old.clone());
     }
     // normalize
     let lc = Poly::leading_coeff(remainder_old.clone());
 
-    dbg!("s_old.clone()");
     s_old = Poly::normalize_from_value(s_old.clone(), lc.clone());
-    dbg!(s_old.clone());
     t_old = Poly::normalize_from_value(t_old.clone(), lc.clone());
-    dbg!(t_old.clone());
 
     remainder_old = Poly::normalize(remainder_old);
 
