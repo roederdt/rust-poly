@@ -17,8 +17,8 @@ pub fn euclidean<
     let mut remainder_old = poly1.clone();
     let mut remainder_new = poly2.clone();
     let mut quotient: Poly<T>;
-    let (mut s_old, mut s_new) = (Poly::new(vec![T::one()]), Poly::new(vec![T::zero()]));
-    let (mut t_old, mut t_new) = (Poly::new(vec![T::zero()]), Poly::new(vec![T::one()]));
+    let (mut s_old, mut s_new) = (Poly::new(&vec![T::one()]), Poly::new(&vec![T::zero()]));
+    let (mut t_old, mut t_new) = (Poly::new(&vec![T::zero()]), Poly::new(&vec![T::one()]));
     let mut temp;
     while !remainder_new.is_zero() {
         temp = remainder_new.clone();
@@ -37,8 +37,8 @@ pub fn euclidean<
     // normalize
     let lc = Poly::leading_coeff(remainder_old.clone());
 
-    s_old = Poly::normalize_from_value(s_old.clone(), lc.clone());
-    t_old = Poly::normalize_from_value(t_old.clone(), lc.clone());
+    s_old = Poly::normalize_from_value(s_old, &lc);
+    t_old = Poly::normalize_from_value(t_old, &lc);
 
     remainder_old = Poly::normalize(remainder_old);
 
@@ -72,13 +72,13 @@ mod tests {
                 &from_integer_slice(vec![-1, 0, 0, 0, 1])
             ),
             (
-                Poly::new(vec![
+                Poly::new(&vec![
                     Rational64::new(23, 51),
                     Rational64::new(-10, 51),
                     Rational64::new(11, 51),
                     Rational64::new(-7, 51)
                 ]),
-                Poly::new(vec![
+                Poly::new(&vec![
                     Rational64::new(-28, 51),
                     Rational64::new(-10, 51),
                     Rational64::new(-12, 51),
@@ -98,14 +98,14 @@ mod tests {
                 &from_integer_slice(vec![-1, 12, -20, -52, 3, 1])
             ),
             (
-                Poly::new(vec![
+                Poly::new(&vec![
                     Rational64::new(4731, 4709),
                     Rational64::new(-329, 4709),
                     Rational64::new(-3511, 4709),
                     Rational64::new(173, 4709),
                     Rational64::new(65, 4709)
                 ]),
-                Poly::new(vec![Rational64::new(22, 4709), Rational64::new(-65, 4709)]),
+                Poly::new(&vec![Rational64::new(22, 4709), Rational64::new(-65, 4709)]),
                 from_integer_slice(vec![1])
             )
         )
@@ -119,14 +119,14 @@ mod tests {
                 &from_integer_slice(vec![-1, 1, -1, -1, 1, 1])
             ),
             (
-                Poly::new(vec![
+                Poly::new(&vec![
                     Rational64::new(11, 10),
                     Rational64::new(-4, 10),
                     Rational64::new(-7, 10),
                     Rational64::new(2, 10),
                     Rational64::new(3, 10)
                 ]),
-                Poly::new(vec![Rational64::new(1, 10), Rational64::new(-3, 10)]),
+                Poly::new(&vec![Rational64::new(1, 10), Rational64::new(-3, 10)]),
                 from_integer_slice(vec![1])
             )
         )

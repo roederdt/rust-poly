@@ -24,20 +24,24 @@ impl<
     > Poly<T>
 {
     // Creates new Poly from Rational64 vector
-    pub fn new(coeffs: Vec<T>) -> Self {
+    pub fn new(coeffs: &Vec<T>) -> Self {
         if coeffs.len() == 0 {
             Poly {
                 values: vec![T::zero()],
             }
         } else {
-            Poly { values: coeffs }.remove_trail()
+            Poly {
+                values: coeffs.as_slice().to_vec(),
+            }
+            .remove_trail()
         }
     }
 
     // Removes trailing zeros, so that the polynomials don't end up like 0x^7+0x^6... ...+15
-    fn remove_trail(self) -> Self {
+    fn remove_trail(&self) -> Self {
         let mut values: Vec<T> = self
             .values
+            .clone()
             .into_iter()
             .rev()
             .skip_while(|x| *x == T::zero())
@@ -65,7 +69,7 @@ impl<
         self.values[0].clone()
     }
 
-    pub fn normalize_from_value(self, value: T) -> Poly<T> {
+    pub fn normalize_from_value(self, value: &T) -> Poly<T> {
         let mut nself = self;
         for i in 0..nself.values.len() {
             nself.values[i] = nself.values[i].clone() / value.clone();
@@ -88,7 +92,7 @@ impl<
             .into_iter()
             .map(|x| x / divisor.clone())
             .collect();
-        Poly::new(t)
+        Poly::new(&t)
     }
 
     pub fn coeff_mul(self, divisor: T) -> Poly<T> {
@@ -97,13 +101,13 @@ impl<
             .into_iter()
             .map(|x| x * divisor.clone())
             .collect();
-        Poly::new(t)
+        Poly::new(&t)
     }
 }
 
 pub fn from_integer_slice(coeffs: Vec<i64>) -> Poly<Rational64> {
     Poly::new(
-        coeffs
+        &coeffs
             .into_iter()
             .map(|x| Rational64::from_integer(x))
             .collect::<Vec<Rational64>>(),
@@ -133,7 +137,7 @@ pub fn new_from_slice(slice: &[u8]) -> Poly<Z2z> {
             }
         }
     }
-    Poly::new(bits)
+    Poly::new(&bits)
 }
 
 impl<T: std::fmt::Display + num::Zero + Clone + num::One + PartialEq> std::fmt::Display
@@ -233,7 +237,7 @@ impl<
     > num::Zero for Poly<T>
 {
     fn zero() -> Self {
-        Poly::new(vec![T::zero()])
+        Poly::new(&vec![T::zero()])
     }
     fn is_zero(&self) -> bool {
         if self.values[self.values.len() - 1] == T::zero() {
@@ -256,7 +260,7 @@ impl<
     > num::One for Poly<T>
 {
     fn one() -> Self {
-        Poly::new(vec![T::one()])
+        Poly::new(&vec![T::one()])
     }
     fn is_one(&self) -> bool {
         if self.values[self.values.len() - 1] == T::one() {
@@ -332,7 +336,7 @@ impl<
                     accum[x + y].clone() + (self.values[x].clone() * poly2.values[y].clone());
             }
         }
-        Poly::new(accum)
+        Poly::new(&accum)
     }
 }
 
@@ -358,7 +362,7 @@ impl<
             panic!("Division by zero error");
         }
         if dividend.len() < divisor.len() {
-            return (Poly::new(vec![T::zero()]), Poly::new(dividend));
+            return (Poly::new(&vec![T::zero()]), Poly::new(&dividend));
         }
         let mut temp: Vec<T> = vec![T::zero(); dividend.len() + 1 - div_len];
         let mut t;
@@ -372,7 +376,7 @@ impl<
             }
         }
 
-        (Poly::new(temp), Poly::new(dividend))
+        (Poly::new(&temp), Poly::new(&dividend))
     }
 }
 
@@ -627,7 +631,7 @@ mod tests {
             Rational64::new(5, 3),
         ];
         assert_eq!(
-            format!("{:?}", Poly::new(tvec)),
+            format!("{:?}", Poly::new(&tvec)),
             String::from("5/3x^2 + 2x + 1")
         );
     }
@@ -640,7 +644,7 @@ mod tests {
             Rational64::new(-5, -3),
         ];
         assert_eq!(
-            format!("{:?}", Poly::new(tvec)),
+            format!("{:?}", Poly::new(&tvec)),
             String::from("5/3x^2 + 2x + 1")
         );
     }
@@ -719,15 +723,15 @@ mod tests {
 
     #[test]
     fn coeff_div_simple() {
-        let t = Poly::new(vec![2, 4, 6, 8]);
+        let t = Poly::new(&vec![2, 4, 6, 8]);
         let temp = t.coeff_div(2);
-        assert_eq!(temp, Poly::new(vec![1, 2, 3, 4]));
+        assert_eq!(temp, Poly::new(&vec![1, 2, 3, 4]));
     }
 
     #[test]
     fn coeff_mul_simple() {
-        let t = Poly::new(vec![2, 4, 6, 8]);
+        let t = Poly::new(&vec![2, 4, 6, 8]);
         let temp = t.coeff_mul(3);
-        assert_eq!(temp, Poly::new(vec![6, 12, 18, 24]));
+        assert_eq!(temp, Poly::new(&vec![6, 12, 18, 24]));
     }
 }

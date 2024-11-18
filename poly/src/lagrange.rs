@@ -17,20 +17,20 @@ pub fn interpolate<
         return Err(std::fmt::Error);
     }
     let mut bases: Vec<Poly<T>> = Vec::new();
-    let mut instance: Poly<T> = Poly::new(vec![T::one()]);
+    let mut instance: Poly<T> = Poly::new(&vec![T::one()]);
     for j in 0..xs.len() {
         for i in 0..xs.len() {
             if i == j {
                 continue;
             }
             instance = instance
-                * (Poly::new(vec![T::zero() - xs[i].clone(), T::one()])
+                * (Poly::new(&vec![T::zero() - xs[i].clone(), T::one()])
                     .coeff_div(xs[j].clone() - xs[i].clone()));
         }
         bases.push(instance.clone());
-        instance = Poly::new(vec![T::one()]);
+        instance = Poly::new(&vec![T::one()]);
     }
-    let mut lagrange = Poly::new(vec![T::zero()]);
+    let mut lagrange = Poly::new(&vec![T::zero()]);
     for i in 0..bases.len() {
         lagrange = lagrange + bases[i].clone().coeff_mul(ys[i].clone());
     }
@@ -61,7 +61,7 @@ mod tests {
         )?;
         assert_eq!(
             t,
-            Poly::new(vec![
+            Poly::new(&vec![
                 Rational64::from_integer(1),
                 Rational64::new(675, 250),
                 Rational64::new(-125, 250),
