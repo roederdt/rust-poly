@@ -1,0 +1,25 @@
+[package]
+name = "poly-fuzz"
+version = "0.0.0"
+publish = false
+edition = "2021"
+
+[package.metadata]
+cargo-fuzz = true
+
+[dependencies]
+libfuzzer-sys = "0.4"
+num = "0.4.3"
+
+[dependencies.poly]
+path = ".."
+
+[dependencies.z2z]
+path = "../../z2z"
+
+[[bin]]
+name = "inv_mod"
+path = "fuzz_targets/inv_mod.rs"
+test = false
+doc = false
+bench = false
