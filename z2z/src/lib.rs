@@ -103,6 +103,11 @@ mod tests {
     }
 
     #[test]
+    fn sub_one_and_one() {
+        assert_eq!(Z2z::One - Z2z::One, Z2z::Zero);
+    }
+
+    #[test]
     fn sub_one_and_zero() {
         assert_eq!(Z2z::One - Z2z::Zero, Z2z::One);
     }
@@ -110,6 +115,11 @@ mod tests {
     #[test]
     fn sub_zero_and_one() {
         assert_eq!(Z2z::Zero - Z2z::One, Z2z::One);
+    }
+
+    #[test]
+    fn sub_zero_and_zero() {
+        assert_eq!(Z2z::Zero - Z2z::Zero, Z2z::Zero);
     }
 
     #[test]
@@ -142,5 +152,10 @@ mod tests {
     #[test]
     fn div_zero_and_one() {
         assert_eq!(Z2z::Zero / Z2z::One, Z2z::Zero);
+    }
+
+    #[test]
+    fn symmetric() {
+        assert_eq!(Z2z::Zero + Z2z::One, Z2z::One + Z2z::Zero);
     }
 }

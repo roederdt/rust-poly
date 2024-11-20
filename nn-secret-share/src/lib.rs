@@ -75,8 +75,25 @@ mod tests {
     }
 
     #[test]
+    fn encode_length_matches_input() -> Result<(), Error> {
+        let t = [0, 1, 0, 0, 1, 0, 0, 1];
+        let newt = encode(&t, 5)?;
+        assert_eq!(newt.len(), 5);
+        Ok(())
+    }
+
+    #[test]
     fn decode_returns_original() -> Result<(), Error> {
         let t = [0, 1, 0, 0, 1, 0, 0, 1];
+        let enct = encode(&t, 5)?;
+        let dect = decode(&enct)?;
+        assert_eq!(t, dect.as_slice());
+        Ok(())
+    }
+
+    #[test]
+    fn decode_returns_with_hex() -> Result<(), Error> {
+        let t = [0x5f, 0xbe, 0xff, 0x11];
         let enct = encode(&t, 5)?;
         let dect = decode(&enct)?;
         assert_eq!(t, dect.as_slice());
@@ -94,5 +111,14 @@ mod tests {
             assert_eq!(t[i], dect.as_slice()[i]);
         }
         Ok(())
+    }
+    #[test]
+    #[should_panic]
+    fn modified_decode_is_incorrect() {
+        let t = [0, 1, 0, 0, 1, 0, 0, 1];
+        let mut enct = encode(&t, 5).unwrap();
+        enct[0][1] = 15;
+        let dect = decode(&enct).unwrap();
+        assert_eq!(t, dect.as_slice());
     }
 }
