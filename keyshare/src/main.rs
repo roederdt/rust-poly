@@ -151,14 +151,19 @@ fn main() -> Result<(), Error> {
 #[cfg(test)]
 mod tests {
     use super::*;
+    use std::io::Write;
+    use tempfile::tempfile;
     #[test]
     fn encode_and_decode() -> Result<(), Error> {
-        let infile = String::from("./target/debug/plaintext");
-        let orr_plaintext = fs::read_to_string(infile.clone())?;
+        let mut t = tempfile()?;
+        dbg!(t.metadata())?;
+        let plaintext = String::from("test");
+
+        writeln!(t, "{}", plaintext)?;
         let num_shares = 5;
-        let (nonce, ciphertext, keys_vec) = encode(&orr_plaintext, num_shares)?;
-        let plaintext = decode(&nonce, &ciphertext, &keys_vec)?;
-        assert_eq!(plaintext, orr_plaintext);
+        let (nonce, ciphertext, keys_vec) = encode(&plaintext, num_shares)?;
+        let decrypted = decode(&nonce, &ciphertext, &keys_vec)?;
+        assert_eq!(plaintext, decrypted);
 
         Ok(())
     }
