@@ -33,9 +33,7 @@ struct CipherIv {
     nonce: String,
 }
 
-fn encode(infile: &String, num_shares: usize) -> Result<(String, String, Vec<String>), Error> {
-    let in_contents = fs::read_to_string(infile)?;
-
+fn encode(in_contents: &String, num_shares: usize) -> Result<(String, String, Vec<String>), Error> {
     let key = ChaCha20Poly1305::generate_key(&mut OsRng);
     let cipher = ChaCha20Poly1305::new(&key);
     let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
@@ -83,47 +81,49 @@ fn main() -> Result<(), Error> {
     }
     let kind = &args[1];
     if kind == "encode" {
-        if args.len() != 5 {
+        if args.len() != 6 {
             return Err(Error::InvalidArgError(format!(
-                "Must provide exactly 4 arguments. Provided {}",
+                "Must provide exactly 5 arguments. Provided {}",
                 args.len() - 1
             )));
         }
         let infile = &args[2];
         let num_shares: usize = args[3].parse()?;
         let key_name = &args[4];
+        let out_path = &args[5];
+        let in_contents = fs::read_to_string(infile)?;
 
-        let (nonce, ciphertext, keys_vec) = encode(infile, num_shares)?;
+        let (nonce, ciphertext, keys_vec) = encode(&in_contents, num_shares)?;
 
-        if !(fs::exists(format!("./target/debug/{key_name}"))?) {
-            fs::create_dir(format!("./target/debug/{key_name}"))?;
+        if !(fs::exists(out_path)?) {
+            return Err(Error::InvalidArgError(String::from(
+                "Directory for output provided does not exists",
+            )));
         }
 
         let iv_cipher = CipherIv { nonce, ciphertext };
         fs::write(
-            format!("./target/debug/{key_name}/cipher_iv"),
+            format!("{out_path}/cipher_iv"),
             serde_json::to_string(&iv_cipher)?,
         )?;
 
         for i in 0..keys_vec.len() {
-            fs::write(
-                format!("./target/debug/{key_name}/{key_name}{i}"),
-                &keys_vec[i],
-            )?;
+            fs::write(format!("{out_path}/{key_name}{i}"), &keys_vec[i])?;
         }
     } else {
         if kind == "decode" {
-            if args.len() != 4 {
+            if args.len() != 6 {
                 return Err(Error::InvalidArgError(format!(
-                    "Must provide exactly 3 arguments. Provided {}",
+                    "Must provide exactly 5 arguments. Provided {}",
                     args.len() - 1
                 )));
             }
-            let file_name = &args[2];
-            let num_files = args[3].parse()?;
+            let in_path = &args[2];
+            let file_name = &args[3];
+            let num_files = args[4].parse()?;
+            let out_path = &args[5];
 
-            let cipher_iv_string =
-                fs::read_to_string(format!("./target/debug/{file_name}/cipher_iv"))?;
+            let cipher_iv_string = fs::read_to_string(format!("{in_path}/cipher_iv"))?;
 
             let cipher_iv: CipherIv = serde_json::from_str(&cipher_iv_string)?;
 
@@ -133,13 +133,12 @@ fn main() -> Result<(), Error> {
             let mut keys_vec = Vec::new();
             let mut temp_file;
             for i in 0..num_files {
-                temp_file =
-                    fs::read_to_string(format!("./target/debug/{file_name}/{file_name}{i}"))?;
+                temp_file = fs::read_to_string(format!("{in_path}/{file_name}{i}"))?;
                 keys_vec.push(temp_file);
             }
 
             let plaintext = decode(&nonce, &ciphertext, &keys_vec)?;
-            fs::write("./target/debug/plaintext_testAgain", plaintext)?;
+            fs::write(out_path, plaintext)?;
         } else {
             return Err(Error::InvalidArgError(format!(
                 "The subcommand argument must be encode/decode"
@@ -147,4 +146,20 @@ fn main() -> Result<(), Error> {
         }
     }
     Ok(())
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    #[test]
+    fn encode_and_decode() -> Result<(), Error> {
+        let infile = String::from("./target/debug/plaintext");
+        let orr_plaintext = fs::read_to_string(infile.clone())?;
+        let num_shares = 5;
+        let (nonce, ciphertext, keys_vec) = encode(&orr_plaintext, num_shares)?;
+        let plaintext = decode(&nonce, &ciphertext, &keys_vec)?;
+        assert_eq!(plaintext, orr_plaintext);
+
+        Ok(())
+    }
 }

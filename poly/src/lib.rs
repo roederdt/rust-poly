@@ -4,7 +4,7 @@ mod lagrange;
 pub use lagrange::interpolate;
 mod gf_2_256;
 pub use gf_2_256::GF2256;
-use num::rational::Rational64;
+use num::{rational::Rational64, Zero};
 use z2z::Z2z;
 
 // Struct that represents a polynomial
@@ -89,6 +89,9 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
     }
 
     pub fn inv_mod(&self, poly2: &Poly<T>) -> Poly<T> {
+        if self.is_zero() {
+            panic!("zero has no inverse");
+        }
         let (s, _t, _rem) = euclidean(self, poly2);
         s
     }
@@ -134,6 +137,22 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
         }
 
         (Poly::new(temp), Poly::new(dividend))
+    }
+
+    pub fn evaluate(&self, value: &T) -> T {
+        let mut sum = T::zero();
+        let mut val = T::one();
+        for i in 0..self.values.len() {
+            // get the x^power
+            for _j in 0..i {
+                val = val * value.clone();
+            }
+            // multiply by coeff, sum and reset
+            val = val * self.values[i].clone();
+            sum = sum + val.clone();
+            val = T::one();
+        }
+        return sum;
     }
 }
 
@@ -699,5 +718,14 @@ mod tests {
         let t = Poly::new(vec![2, 4, 6, 8]);
         let temp = t.coeff_mul(3);
         assert_eq!(temp, Poly::new(vec![6, 12, 18, 24]));
+    }
+
+    #[test]
+    fn evaluate_poly_ints() {
+        let t = from_integer_slice(&vec![1, 2, 3]);
+        assert_eq!(
+            t.evaluate(&Rational64::from_integer(3)),
+            Rational64::from_integer(34)
+        );
     }
 }
