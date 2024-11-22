@@ -10,3 +10,6 @@ thiserror = "1.0.64"
 nn-secret-share = { path = "../nn-secret-share"}
 serde = { version = "1.0.214", features = ["derive"]}
 serde_json = "1.0.132"
+
+[dev-dependencies]
+tempfile = "3.14.0"
