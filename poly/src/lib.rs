@@ -1,4 +1,5 @@
 mod euclidean;
+mod shamir;
 pub use euclidean::euclidean;
 mod lagrange;
 pub use lagrange::interpolate;
@@ -726,6 +727,27 @@ mod tests {
         assert_eq!(
             t.evaluate(&Rational64::from_integer(3)),
             Rational64::from_integer(34)
+        );
+    }
+
+    #[test]
+    fn evaluate_zero() {
+        let t = from_integer_slice(&vec![0]);
+        assert_eq!(t.evaluate(&Rational64::zero()), Rational64::zero());
+    }
+
+    #[test]
+    fn evaluate_one() {
+        let t = from_integer_slice(&vec![1]);
+        assert_eq!(t.evaluate(&Rational64::one()), Rational64::one());
+    }
+
+    #[test]
+    fn evaluate_with_middle_zeros() {
+        let t = from_integer_slice(&vec![1, 0, 0, 0, 1]);
+        assert_eq!(
+            t.evaluate(&Rational64::from_integer(4)),
+            Rational64::from_integer(257)
         );
     }
 }
