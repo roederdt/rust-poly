@@ -1,5 +1,6 @@
 use crate::new_from_slice;
 use crate::Poly;
+use crate::PolyTraits;
 use lazy_static::lazy_static;
 use z2z::Z2z;
 
@@ -18,6 +19,8 @@ impl GF2256 {
         GF2256(inner.modulus(&IRRED))
     }
 }
+
+impl PolyTraits<GF2256> for GF2256 {}
 
 impl std::ops::Add for GF2256 {
     type Output = Self;
