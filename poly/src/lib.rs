@@ -1,6 +1,7 @@
 mod euclidean;
 mod shamir;
 pub use euclidean::euclidean;
+pub use shamir::shamir_secret_decode;
 pub use shamir::shamir_secret_encode;
 mod lagrange;
 pub use lagrange::interpolate;

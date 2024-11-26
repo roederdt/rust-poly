@@ -61,3 +61,8 @@ pub fn shamir_secret_encode<T: PolyTraits<T> + num::Zero + num::One>(
     let p = interpolate(&xs, &ys)?;
     Ok(p)
 }
+
+pub fn shamir_secret_decode(xs: Vec<GF2256>, ys: Vec<GF2256>) -> Result<GF2256, Error> {
+    let t = interpolate(&xs, &ys)?;
+    Ok(t.values[0].clone())
+}
