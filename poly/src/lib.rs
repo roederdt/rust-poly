@@ -1,8 +1,7 @@
 mod euclidean;
 mod shamir;
 pub use euclidean::euclidean;
-pub use shamir::shamir_secret_decode;
-pub use shamir::shamir_secret_encode;
+pub use shamir::ShamirShare;
 mod lagrange;
 pub use lagrange::interpolate;
 mod gf_2_256;
@@ -10,7 +9,7 @@ pub use gf_2_256::GF2256;
 use num::{rational::Rational64, Zero};
 use z2z::Z2z;
 // Struct that represents a polynomial
-// with its highest power, all coefficients(in order from highest power to lowest power)
+// by all coefficients(in order from highest power to lowest power)
 #[derive(Clone, PartialEq, Eq)]
 pub struct Poly<T> {
     values: Vec<T>,
@@ -71,6 +70,8 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
         }
         return nself;
     }
+
+    // returns the leading coefficient of the function
     pub fn leading_coeff(self) -> T {
         if self.values.len() == 0 {
             return T::zero();
@@ -78,6 +79,7 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
         self.values[0].clone()
     }
 
+    // normalizes the Poly by some T
     pub fn normalize_from_value(self, value: &T) -> Poly<T> {
         let mut nself = self;
         for i in 0..nself.values.len() {
@@ -86,10 +88,12 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
         return nself;
     }
 
+    // mod function for Poly
     pub fn modulus(&self, poly2: &Poly<T>) -> Poly<T> {
         (self.div(poly2)).1
     }
 
+    // returns the inverse of self in mod poly2
     pub fn inv_mod(&self, poly2: &Poly<T>) -> Poly<T> {
         if self.is_zero() {
             panic!("zero has no inverse");
@@ -98,6 +102,8 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
         s
     }
 
+    // divides some T from each coefficient
+    // (T division rather than Poly division)
     pub fn coeff_div(self, divisor: T) -> Poly<T> {
         let t = self
             .values
@@ -107,6 +113,7 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
         Poly::new(t)
     }
 
+    // muls by some T rather than some Poly
     pub fn coeff_mul(self, divisor: T) -> Poly<T> {
         let t = self
             .values
@@ -116,6 +123,7 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
         Poly::new(t)
     }
 
+    // division by reference rather than by move
     pub fn div(&self, poly2: &Poly<T>) -> (Self, Self) {
         let mut dividend = self.values.clone();
         let divisor = &poly2.values;
@@ -141,6 +149,7 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
         (Poly::new(temp), Poly::new(dividend))
     }
 
+    // Evaluates Poly at a given T
     pub fn evaluate(&self, value: &T) -> T {
         let mut sum = T::zero();
         let mut val = T::one();
@@ -158,6 +167,7 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
     }
 }
 
+// Creates a Poly<Rational64> from a Vec of ints
 pub fn from_integer_slice(coeffs: &Vec<i64>) -> Poly<Rational64> {
     Poly::new(
         coeffs
@@ -179,6 +189,7 @@ impl<T: std::fmt::Display> std::fmt::Debug for Poly<T> {
     }
 }
 
+// Creates a Poly<Z2Z> from slice
 pub fn new_from_slice(slice: &[u8]) -> Poly<Z2z> {
     let mut bits: Vec<Z2z> = Vec::new();
     for x in slice {
