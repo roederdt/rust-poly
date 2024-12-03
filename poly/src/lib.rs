@@ -1,7 +1,9 @@
 mod euclidean;
 mod shamir;
 pub use euclidean::euclidean;
-pub use shamir::ShamirShare;
+pub use shamir::decode;
+pub use shamir::encode;
+pub use shamir::Share;
 mod lagrange;
 pub use lagrange::interpolate;
 mod gf_2_256;
