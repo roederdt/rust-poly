@@ -8,6 +8,7 @@ mod gf_2_256;
 pub use gf_2_256::GF2256;
 use num::{rational::Rational64, Zero};
 use z2z::Z2z;
+
 // Struct that represents a polynomial
 // by all coefficients(in order from highest power to lowest power)
 #[derive(Clone, PartialEq, Eq)]
