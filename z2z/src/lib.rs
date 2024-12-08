@@ -78,7 +78,7 @@ impl std::fmt::Display for Z2z {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
         match self {
             Z2z::Zero => {
-                write!(f, "1")?;
+                write!(f, "0")?;
             }
             Z2z::One => {
                 write!(f, "1")?;

@@ -18,8 +18,34 @@ impl GF2256 {
     pub fn new(inner: &Poly<Z2z>) -> Self {
         GF2256(inner.modulus(&IRRED))
     }
+
+    pub fn to_bytes(&self) -> Vec<u8> {
+        let values = &self.0.values;
+        let mut rvec = Vec::new();
+        let mut temp: u8 = 0;
+        for i in values.iter().enumerate() {
+            if i.0 % 8 == 0 && i.0 != 0 {
+                rvec.push(temp);
+                temp = 0;
+            }
+            match i.1 {
+                Z2z::One => temp |= 1 << (i.0 % 8),
+                Z2z::Zero => (),
+            }
+        }
+        if values.len() % 8 != 0 {
+            rvec.push(temp);
+        }
+        rvec
+    }
 }
 
+impl std::fmt::Display for GF2256 {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
+        write!(f, "{}", self.0);
+        Ok(())
+    }
+}
 impl PolyTraits<GF2256> for GF2256 {}
 
 impl std::ops::Add for GF2256 {
@@ -173,5 +199,42 @@ mod tests {
         let t = new_from_slice(&vec![1, 2, 3, 4]);
         let a = GF2256::new(&t);
         assert_eq!(GF2256::zero(), a.clone() * GF2256::zero());
+    }
+
+    #[test]
+    fn bytes_round_trip() {
+        let t = 54u8.to_le_bytes();
+        let temp = new_from_slice(&t);
+        assert_eq!(t, *GF2256::new(&temp).to_bytes())
+    }
+    #[test]
+    fn bytes_round_trip_bigger() {
+        let t = 584u16.to_le_bytes();
+        let temp = new_from_slice(&t);
+        assert_eq!(t, *GF2256::new(&temp).to_bytes())
+    }
+
+    fn cmp_with_trailing_zeros(cmp1: &[u8], cmp2: &[u8]) {
+        let higher;
+        let lower;
+        if cmp1.len() > cmp2.len() {
+            higher = cmp1;
+            lower = cmp2;
+        } else {
+            higher = cmp2;
+            lower = cmp1;
+        }
+        assert!(lower
+            .iter()
+            .chain((&[0u8; 1]).iter().cycle())
+            .zip(higher.iter())
+            .all(|(&lhs, &rhs)| lhs == rhs));
+    }
+
+    #[test]
+    fn bytes_round_trip_much_bigger() {
+        let t = 584u64.to_le_bytes();
+        let temp = new_from_slice(&t);
+        cmp_with_trailing_zeros(&t, &GF2256::new(&temp).to_bytes())
     }
 }

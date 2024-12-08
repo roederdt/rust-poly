@@ -1,8 +1,7 @@
 mod euclidean;
 mod shamir;
 pub use euclidean::euclidean;
-pub use shamir::decode;
-pub use shamir::encode;
+pub use shamir::ShamirSharer;
 pub use shamir::Share;
 mod lagrange;
 pub use lagrange::interpolate;
@@ -192,7 +191,7 @@ impl<T: std::fmt::Display> std::fmt::Debug for Poly<T> {
     }
 }
 
-// Creates a Poly<Z2Z> from slice
+// Creates a Poly<Z2Z> from bytes
 pub fn new_from_slice(slice: &[u8]) -> Poly<Z2z> {
     let mut bits: Vec<Z2z> = Vec::new();
     for x in slice {
