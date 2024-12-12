@@ -9,21 +9,28 @@ use getrandom;
 #[derive(Clone, Debug)]
 pub enum Share {
     ShamirShare { x: GF2256, y: GF2256 },
-    XorShare,
+    XorShare(Vec<u8>),
 }
 
 impl Share {
     pub fn get_x_shamir(&self) -> Result<GF2256, Error> {
         match self {
             Share::ShamirShare { x, y: _ } => Ok(x.clone()),
-            Share::XorShare => Err(Error),
+            Share::XorShare(_) => Err(Error),
         }
     }
 
     pub fn get_y_shamir(&self) -> Result<GF2256, Error> {
         match self {
             Share::ShamirShare { x: _, y } => Ok(y.clone()),
-            Share::XorShare => Err(Error),
+            Share::XorShare(_) => Err(Error),
+        }
+    }
+
+    pub fn len_xor(&self) -> Result<usize, Error> {
+        match self {
+            Share::ShamirShare { x: _, y: _ } => Err(Error),
+            Share::XorShare(a) => Ok(a.len()),
         }
     }
 }

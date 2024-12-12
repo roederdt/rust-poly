@@ -3,10 +3,11 @@ use chacha20poly1305::{
     aead::{Aead, AeadCore, KeyInit, OsRng},
     ChaCha20Poly1305, Key, Nonce,
 };
+use clap::{Parser, Subcommand};
 use nn_secret_share;
 use serde::{Deserialize, Serialize};
 use std::fs;
-use std::{env, num::ParseIntError};
+use std::num::ParseIntError;
 
 #[derive(Debug, thiserror::Error)]
 pub enum Error {
@@ -26,6 +27,30 @@ pub enum Error {
     IoError(#[from] std::io::Error),
     #[error("serde_json error: {0}")]
     SerdeJsonError(#[from] serde_json::Error),
+}
+
+#[derive(Parser)]
+struct Cli {
+    #[arg(short, long)]
+    threshold: Option<u8>,
+    #[command(subcommand)]
+    command: Commands,
+}
+
+#[derive(Subcommand)]
+enum Commands {
+    Encode {
+        infile: String,
+        num_shares: usize,
+        key_name: String,
+        out_path: String,
+    },
+    Decode {
+        in_path: String,
+        file_name: String,
+        num_files: usize,
+        out_path: String,
+    },
 }
 #[derive(Serialize, Deserialize)]
 struct CipherIv {
@@ -72,57 +97,41 @@ fn decode(
     Ok(plaintext)
 }
 fn main() -> Result<(), Error> {
-    let args: Vec<String> = env::args().collect();
+    let cli = Cli::parse();
+    match cli.command {
+        Commands::Encode {
+            infile,
+            num_shares,
+            key_name,
+            out_path,
+        } => {
+            let in_contents = fs::read_to_string(infile)?;
 
-    if args.len() < 2 {
-        return Err(Error::InvalidArgError(format!(
-            "Must provide a subcommand argument"
-        )));
-    }
-    let kind = &args[1];
-    if kind == "encode" {
-        if args.len() != 6 {
-            return Err(Error::InvalidArgError(format!(
-                "Must provide exactly 5 arguments. Provided {}",
-                args.len() - 1
-            )));
-        }
-        let infile = &args[2];
-        let num_shares: usize = args[3].parse()?;
-        let key_name = &args[4];
-        let out_path = &args[5];
-        let in_contents = fs::read_to_string(infile)?;
+            let (nonce, ciphertext, keys_vec) = encode(&in_contents, num_shares)?;
 
-        let (nonce, ciphertext, keys_vec) = encode(&in_contents, num_shares)?;
-
-        if !(fs::exists(out_path)?) {
-            return Err(Error::InvalidArgError(String::from(
-                "Directory for output provided does not exists",
-            )));
-        }
-
-        let iv_cipher = CipherIv { nonce, ciphertext };
-        fs::write(
-            format!("{out_path}/cipher_iv"),
-            serde_json::to_string(&iv_cipher)?,
-        )?;
-
-        for i in 0..keys_vec.len() {
-            fs::write(format!("{out_path}/{key_name}{i}"), &keys_vec[i])?;
-        }
-    } else {
-        if kind == "decode" {
-            if args.len() != 6 {
-                return Err(Error::InvalidArgError(format!(
-                    "Must provide exactly 5 arguments. Provided {}",
-                    args.len() - 1
+            if !(fs::exists(&out_path)?) {
+                return Err(Error::InvalidArgError(String::from(
+                    "Directory for output provided does not exists",
                 )));
             }
-            let in_path = &args[2];
-            let file_name = &args[3];
-            let num_files = args[4].parse()?;
-            let out_path = &args[5];
 
+            let iv_cipher = CipherIv { nonce, ciphertext };
+            fs::write(
+                format!("{out_path}/cipher_iv"),
+                serde_json::to_string(&iv_cipher)?,
+            )?;
+
+            for i in 0..keys_vec.len() {
+                fs::write(format!("{out_path}/{key_name}{i}"), &keys_vec[i])?;
+            }
+        }
+
+        Commands::Decode {
+            in_path,
+            file_name,
+            num_files,
+            out_path,
+        } => {
             let cipher_iv_string = fs::read_to_string(format!("{in_path}/cipher_iv"))?;
 
             let cipher_iv: CipherIv = serde_json::from_str(&cipher_iv_string)?;
@@ -139,10 +148,6 @@ fn main() -> Result<(), Error> {
 
             let plaintext = decode(&nonce, &ciphertext, &keys_vec)?;
             fs::write(out_path, plaintext)?;
-        } else {
-            return Err(Error::InvalidArgError(format!(
-                "The subcommand argument must be encode/decode"
-            )));
         }
     }
     Ok(())

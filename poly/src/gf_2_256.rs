@@ -42,7 +42,7 @@ impl GF2256 {
 
 impl std::fmt::Display for GF2256 {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> Result<(), std::fmt::Error> {
-        write!(f, "{}", self.0);
+        write!(f, "{}", self.0)?;
         Ok(())
     }
 }

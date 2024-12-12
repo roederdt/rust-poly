@@ -6,3 +6,5 @@ edition = "2021"
 [dependencies]
 getrandom = "0.2.15"
 thiserror = "1.0.64"
+
+poly = { path = "../poly"}

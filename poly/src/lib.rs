@@ -1,7 +1,8 @@
 mod euclidean;
 mod shamir;
 pub use euclidean::euclidean;
-pub use shamir::ShamirSharer;
+pub use shamir::Error;
+pub use shamir::SecretSharer;
 pub use shamir::Share;
 mod lagrange;
 pub use lagrange::interpolate;
