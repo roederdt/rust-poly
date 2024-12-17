@@ -4,7 +4,10 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+base64 = "0.22.1"
 lazy_static = "1.5.0"
 num = "0.4.3"
 z2z = { path = "../z2z"}
+serde = { version = "1.0.214", features = ["derive"] }
 getrandom = "0.2.15"
+serde_json = "1.0.133"

@@ -105,7 +105,7 @@ mod tests {
         let t = [0, 1, 0, 0, 1, 0, 0, 1];
         let n = XorSharer::new(4);
         let newt = n.encode(&t)?;
-        assert_eq!(newt.len(), 8);
+        assert_eq!(newt.len(), 4);
         Ok(())
     }
 

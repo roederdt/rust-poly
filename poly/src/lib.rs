@@ -1,8 +1,11 @@
 mod euclidean;
 mod shamir;
 pub use euclidean::euclidean;
+use serde::Deserialize;
+use serde::Serialize;
 pub use shamir::Error;
 pub use shamir::SecretSharer;
+pub use shamir::ShamirSharer;
 pub use shamir::Share;
 mod lagrange;
 pub use lagrange::interpolate;
@@ -13,7 +16,7 @@ use z2z::Z2z;
 
 // Struct that represents a polynomial
 // by all coefficients(in order from highest power to lowest power)
-#[derive(Clone, PartialEq, Eq)]
+#[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Poly<T> {
     values: Vec<T>,
 }
@@ -168,8 +171,22 @@ impl<T: PolyTraits<T> + num::Zero + num::One> Poly<T> {
         }
         return sum;
     }
+    pub fn expose_vals(&self) -> Vec<T> {
+        self.values.clone()
+    }
 }
-
+pub fn expose_vals_bytes_z2z(poly: &Poly<Z2z>) -> Vec<u8> {
+    let mut t = Vec::new();
+    for i in 0..poly.values.len() {
+        if poly.values[i] == Z2z::One {
+            t.push(1);
+        }
+        if poly.values[i] == Z2z::Zero {
+            t.push(0);
+        }
+    }
+    t
+}
 // Creates a Poly<Rational64> from a Vec of ints
 pub fn from_integer_slice(coeffs: &Vec<i64>) -> Poly<Rational64> {
     Poly::new(

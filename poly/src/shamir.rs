@@ -2,17 +2,40 @@ use crate::gf_2_256;
 use crate::interpolate;
 use crate::new_from_slice;
 use crate::Poly;
+use base64::prelude::*;
 pub use gf_2_256::GF2256;
+use serde::Deserialize;
+use serde::Deserializer;
+use serde::Serialize;
+use serde::Serializer;
 
 use getrandom;
 
-#[derive(Clone, Debug)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub enum Share {
     ShamirShare { x: GF2256, y: GF2256 },
     XorShare(Vec<u8>),
 }
+// impl Serialize for Share {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         match self {
+//             Self::ShamirShare { x, y } => serializer.serialize_str(&format!(
+//                 "{{x:{},y:{}}}",
+//                 BASE64_STANDARD.encode(x.to_bytes()),
+//                 BASE64_STANDARD.encode(y.to_bytes())
+//             )),
+//             Self::XorShare(t) => serializer.serialize_str(&BASE64_STANDARD.encode(&t)),
+//         }
+//     }
+// }
 
 impl Share {
+    pub fn to_serde_safe(&self) -> Result<(), Error> {
+        Ok(())
+    }
     pub fn get_x_shamir(&self) -> Result<GF2256, Error> {
         match self {
             Share::ShamirShare { x, y: _ } => Ok(x.clone()),

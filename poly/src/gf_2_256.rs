@@ -1,8 +1,13 @@
 use crate::new_from_slice;
 use crate::Poly;
 use crate::PolyTraits;
+use base64::prelude::*;
 use lazy_static::lazy_static;
+use serde::Serializer;
 use z2z::Z2z;
+
+use serde::Deserialize;
+use serde::Serialize;
 
 lazy_static! {
     static ref IRRED: Poly<Z2z> = new_from_slice(&vec![
@@ -11,9 +16,16 @@ lazy_static! {
     ]);
 }
 
-#[derive(Clone, PartialEq, Debug)]
+#[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct GF2256(Poly<Z2z>);
-
+// impl Serialize for GF2256 {
+//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
+//     where
+//         S: Serializer,
+//     {
+//         serializer.serialize_str(&BASE64_STANDARD.encode(&self.to_bytes()))
+//     }
+// }
 impl GF2256 {
     pub fn new(inner: &Poly<Z2z>) -> Self {
         GF2256(inner.modulus(&IRRED))

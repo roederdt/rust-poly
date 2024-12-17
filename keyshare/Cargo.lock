@@ -258,6 +258,7 @@ dependencies = [
  "chacha20poly1305",
  "clap",
  "nn-secret-share",
+ "poly",
  "serde",
  "serde_json",
  "tempfile",
@@ -386,9 +387,12 @@ checksum = "c08d65885ee38876c4f86fa503fb49d7b507c2b62552df7c70b2fce627e06381"
 name = "poly"
 version = "0.1.0"
 dependencies = [
+ "base64",
  "getrandom",
  "lazy_static",
  "num",
+ "serde",
+ "serde_json",
  "z2z",
 ]
 
@@ -471,9 +475,9 @@ dependencies = [
 
 [[package]]
 name = "serde_json"
-version = "1.0.132"
+version = "1.0.133"
 source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "d726bfaff4b320266d395898905d0eba0345aae23b54aee3a737e260fd46db03"
+checksum = "c7fceb2473b9166b2294ef05efcb65a3db80803f0b03ef86a5fc88a2b85ee377"
 dependencies = [
  "itoa",
  "memchr",
@@ -664,6 +668,7 @@ name = "z2z"
 version = "0.1.0"
 dependencies = [
  "num",
+ "serde",
 ]
 
 [[package]]
