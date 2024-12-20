@@ -42,8 +42,8 @@ impl Share {
     pub fn to_b64(&self) -> (String, Option<String>) {
         match self {
             Self::ShamirShare { x, y } => (
-                BASE64_STANDARD.encode(x.to_32_bytes()),
-                Some(BASE64_STANDARD.encode(y.to_32_bytes())),
+                BASE64_STANDARD.encode(x.to_bytes()),
+                Some(BASE64_STANDARD.encode(y.to_bytes())),
             ),
             Self::XorShare(t) => (BASE64_STANDARD.encode(t), None),
         }

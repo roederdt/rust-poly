@@ -21,7 +21,7 @@ impl GF2256 {
         GF2256(inner.modulus(&IRRED))
     }
 
-    pub fn to_32_bytes(&self) -> Vec<u8> {
+    pub fn to_bytes(&self) -> Vec<u8> {
         let values = &self.0.values;
         let mut rvec = Vec::new();
         let mut temp: u8 = 0;
@@ -36,6 +36,10 @@ impl GF2256 {
             }
         }
         rvec.push(temp);
+        rvec
+    }
+    pub fn to_32_bytes(&self) -> Vec<u8> {
+        let mut rvec = self.to_bytes();
         let rem = 32 - rvec.len();
         for _i in 0..rem {
             rvec.push(0);
