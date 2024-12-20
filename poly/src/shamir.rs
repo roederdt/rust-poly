@@ -5,9 +5,7 @@ use crate::Poly;
 use base64::prelude::*;
 pub use gf_2_256::GF2256;
 use serde::Deserialize;
-use serde::Deserializer;
 use serde::Serialize;
-use serde::Serializer;
 
 use getrandom;
 
@@ -16,21 +14,6 @@ pub enum Share {
     ShamirShare { x: GF2256, y: GF2256 },
     XorShare(Vec<u8>),
 }
-// impl Serialize for Share {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         match self {
-//             Self::ShamirShare { x, y } => serializer.serialize_str(&format!(
-//                 "{{x:{},y:{}}}",
-//                 BASE64_STANDARD.encode(x.to_bytes()),
-//                 BASE64_STANDARD.encode(y.to_bytes())
-//             )),
-//             Self::XorShare(t) => serializer.serialize_str(&BASE64_STANDARD.encode(&t)),
-//         }
-//     }
-// }
 
 impl Share {
     pub fn to_serde_safe(&self) -> Result<(), Error> {
@@ -54,6 +37,15 @@ impl Share {
         match self {
             Share::ShamirShare { x: _, y: _ } => Err(Error),
             Share::XorShare(a) => Ok(a.len()),
+        }
+    }
+    pub fn to_b64(&self) -> (String, Option<String>) {
+        match self {
+            Self::ShamirShare { x, y } => (
+                BASE64_STANDARD.encode(x.to_32_bytes()),
+                Some(BASE64_STANDARD.encode(y.to_32_bytes())),
+            ),
+            Self::XorShare(t) => (BASE64_STANDARD.encode(t), None),
         }
     }
 }
@@ -137,7 +129,7 @@ impl SecretSharer for ShamirSharer {
 
         let t = interpolate(&xs, &ys)?;
 
-        Ok(t.values[0].to_bytes())
+        Ok(t.values[0].to_32_bytes())
     }
 }
 
@@ -214,5 +206,17 @@ mod tests {
         let sharer = ShamirSharer::new(8, 4);
         let t = sharer.encode(&secret).unwrap();
         assert_eq!(secret, &(sharer.decode(&t).unwrap()));
+    }
+    #[test]
+    fn test_with_specific_failing_value() -> Result<(), Error> {
+        let secret = [
+            65, 249, 210, 194, 244, 137, 169, 213, 24, 81, 80, 232, 164, 9, 44, 174, 218, 231, 170,
+            146, 53, 205, 14, 253, 232, 110, 53, 34, 82, 214, 238, 0,
+        ];
+        let threshold: usize = 3;
+        let sharer = ShamirSharer::new(5, threshold as u8);
+        let t = sharer.encode(&secret)?;
+        assert_eq!(secret, *(sharer.decode(&t)?));
+        Ok(())
     }
 }

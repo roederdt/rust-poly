@@ -6,7 +6,7 @@ use chacha20poly1305::{
 use clap::{Parser, Subcommand};
 use nn_secret_share::{self, XorSharer};
 use poly::{
-    SecretSharer, ShamirSharer,
+    new_from_slice, SecretSharer, ShamirSharer,
     Share::{self},
 };
 use serde::{Deserialize, Serialize};
@@ -45,8 +45,8 @@ struct Cli {
 enum Commands {
     Encode {
         infile: String,
-        num_shares: usize,
         key_name: String,
+        num_shares: usize,
         out_path: String,
     },
     Decode {
@@ -66,7 +66,7 @@ fn encode(
     in_contents: &String,
     num_shares: usize,
     threshold: u8,
-) -> Result<(String, String, Vec<String>), Error> {
+) -> Result<(String, String, Vec<(String, Option<String>)>), Error> {
     let key = ChaCha20Poly1305::generate_key(&mut OsRng);
     let cipher = ChaCha20Poly1305::new(&key);
     let nonce = ChaCha20Poly1305::generate_nonce(&mut OsRng); // 96-bits; unique per message
@@ -80,18 +80,13 @@ fn encode(
         let t = poly::ShamirSharer::new(num_shares, threshold);
         enc_keys = t.encode(&key.as_ref()).unwrap();
     }
+
     let nonce = BASE64_STANDARD.encode(nonce);
     let ciphertext = BASE64_STANDARD.encode(ciphertext);
 
     let mut b64_keys_list = Vec::new();
-    if threshold == 0 {
-        for i in 0..num_shares {
-            b64_keys_list.push(serde_json::to_string(&enc_keys[i])?);
-        }
-    } else {
-        for i in 0..num_shares {
-            b64_keys_list.push(serde_json::to_string(&enc_keys[i])?);
-        }
+    for i in 0..num_shares {
+        b64_keys_list.push(enc_keys[i].to_b64());
     }
 
     Ok((nonce, ciphertext, b64_keys_list))
@@ -100,25 +95,42 @@ fn encode(
 fn decode(
     nonce: &String,
     ciphertext: &String,
-    b64_keys_list: &Vec<String>,
-    kind: &String,
+    b64_keys_list: &Vec<(String, Option<String>)>,
+    threshold: u8,
 ) -> Result<String, Error> {
     let mut keys_list: Vec<Share> = Vec::new();
-    for i in 0..b64_keys_list.len() {
-        keys_list.push(serde_json::from_str(&b64_keys_list[i].trim())?);
+    if threshold == 0 {
+        for i in 0..b64_keys_list.len() {
+            let t = &b64_keys_list[i].0;
+
+            keys_list.push(Share::XorShare(BASE64_STANDARD.decode(t)?.to_vec()));
+        }
+    } else {
+        for i in 0..b64_keys_list.len() {
+            let t1 = poly::GF2256::new(&new_from_slice(
+                &BASE64_STANDARD.decode(&b64_keys_list[i].0)?,
+            ));
+
+            let t2 = poly::GF2256::new(&new_from_slice(
+                &BASE64_STANDARD.decode(&b64_keys_list[i].1.clone().unwrap())?,
+            ));
+
+            keys_list.push(Share::ShamirShare { x: t1, y: t2 });
+        }
     }
 
     let nonce = BASE64_STANDARD.decode(nonce)?;
     let ciphertext = BASE64_STANDARD.decode(ciphertext)?;
 
     let m;
-    if kind == "nn" {
+    if threshold == 0 {
         let t = XorSharer::new(keys_list.len());
         m = t.decode(&keys_list).unwrap();
     } else {
-        let t = ShamirSharer::new(keys_list.len(), keys_list.len() as u8);
+        let t = ShamirSharer::new(keys_list.len(), threshold);
         m = t.decode(&keys_list).unwrap();
     }
+
     let cipher = ChaCha20Poly1305::new(Key::from_slice(&m));
 
     let plaintext =
@@ -126,8 +138,10 @@ fn decode(
 
     Ok(plaintext)
 }
+
 fn main() -> Result<(), Error> {
     let cli = Cli::parse();
+    let threshold = cli.threshold.unwrap_or(0);
     match cli.command {
         Commands::Encode {
             infile,
@@ -137,8 +151,8 @@ fn main() -> Result<(), Error> {
         } => {
             let in_contents = fs::read_to_string(infile)?;
 
-            let (nonce, ciphertext, keys_vec) = encode(&in_contents, num_shares, 3)?;
-            // cli.threshold.unwrap_or(0)
+            let (nonce, ciphertext, keys_vec) = encode(&in_contents, num_shares, threshold)?;
+
             if !(fs::exists(&out_path)?) {
                 return Err(Error::InvalidArgError(String::from(
                     "Directory for output provided does not exists",
@@ -151,8 +165,26 @@ fn main() -> Result<(), Error> {
                 serde_json::to_string(&iv_cipher)?,
             )?;
 
+            let mut keystring_vec = Vec::new();
             for i in 0..keys_vec.len() {
-                fs::write(format!("{out_path}/{key_name}_{i}"), &keys_vec[i])?;
+                keystring_vec.push(String::from(&keys_vec[i].0));
+            }
+
+            match &keys_vec[0].1 {
+                Some(_) => {
+                    for i in 0..keys_vec.len() {
+                        keystring_vec[i] +=
+                            format!(" {}", (&keys_vec[i].1).clone().unwrap()).as_str();
+                    }
+                }
+                None => {}
+            }
+
+            for i in 0..keys_vec.len() {
+                fs::write(
+                    format!("{out_path}/{key_name}_{i}"),
+                    format!(" {}", keystring_vec[i]),
+                )?;
             }
         }
 
@@ -163,7 +195,6 @@ fn main() -> Result<(), Error> {
             out_path,
         } => {
             let cipher_iv_string = fs::read_to_string(format!("{in_path}/cipher_iv"))?;
-
             let cipher_iv: CipherIv = serde_json::from_str(&cipher_iv_string)?;
 
             let nonce = cipher_iv.nonce;
@@ -171,17 +202,24 @@ fn main() -> Result<(), Error> {
 
             let mut keys_vec = Vec::new();
             let mut temp_file;
-            for i in 0..num_files {
-                temp_file = fs::read_to_string(format!("{in_path}/{file_name}_{i}"))?;
-                keys_vec.push(temp_file);
-            }
-            let kind: String;
             match cli.threshold {
-                Some(_) => kind = String::from("t"),
-                _ => kind = String::from("nn"),
+                Some(_) => {
+                    for i in 0..num_files {
+                        temp_file = fs::read_to_string(format!("{in_path}/{file_name}_{i}"))?;
+                        let temp_file: Vec<&str> = temp_file.split(" ").collect();
+                        keys_vec
+                            .push((String::from(temp_file[1]), Some(String::from(temp_file[2]))));
+                    }
+                }
+                None => {
+                    for i in 0..num_files {
+                        temp_file = fs::read_to_string(format!("{in_path}/{file_name}_{i}"))?;
+                        keys_vec.push((temp_file, None));
+                    }
+                }
             }
 
-            let plaintext = decode(&nonce, &ciphertext, &keys_vec, &kind)?;
+            let plaintext = decode(&nonce, &ciphertext, &keys_vec, threshold)?;
             fs::write(out_path, plaintext)?;
         }
     }
@@ -201,7 +239,7 @@ mod tests {
         writeln!(t, "{}", plaintext)?;
         let num_shares = 5;
         let (nonce, ciphertext, keys_vec) = encode(&plaintext, num_shares, 3)?;
-        let decrypted = decode(&nonce, &ciphertext, &keys_vec, &String::from("t"))?;
+        let decrypted = decode(&nonce, &ciphertext, &keys_vec, 3)?;
         assert_eq!(plaintext, decrypted);
 
         Ok(())

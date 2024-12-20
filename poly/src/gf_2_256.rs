@@ -1,9 +1,7 @@
 use crate::new_from_slice;
 use crate::Poly;
 use crate::PolyTraits;
-use base64::prelude::*;
 use lazy_static::lazy_static;
-use serde::Serializer;
 use z2z::Z2z;
 
 use serde::Deserialize;
@@ -18,20 +16,12 @@ lazy_static! {
 
 #[derive(Clone, PartialEq, Debug, Serialize, Deserialize)]
 pub struct GF2256(Poly<Z2z>);
-// impl Serialize for GF2256 {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         serializer.serialize_str(&BASE64_STANDARD.encode(&self.to_bytes()))
-//     }
-// }
 impl GF2256 {
     pub fn new(inner: &Poly<Z2z>) -> Self {
         GF2256(inner.modulus(&IRRED))
     }
 
-    pub fn to_bytes(&self) -> Vec<u8> {
+    pub fn to_32_bytes(&self) -> Vec<u8> {
         let values = &self.0.values;
         let mut rvec = Vec::new();
         let mut temp: u8 = 0;
@@ -45,8 +35,10 @@ impl GF2256 {
                 Z2z::Zero => (),
             }
         }
-        if values.len() % 8 != 0 {
-            rvec.push(temp);
+        rvec.push(temp);
+        let rem = 32 - rvec.len();
+        for _i in 0..rem {
+            rvec.push(0);
         }
         rvec
     }
@@ -217,13 +209,13 @@ mod tests {
     fn bytes_round_trip() {
         let t = 54u8.to_le_bytes();
         let temp = new_from_slice(&t);
-        assert_eq!(t, *GF2256::new(&temp).to_bytes())
+        assert_eq!(t, *GF2256::new(&temp).to_32_bytes())
     }
     #[test]
     fn bytes_round_trip_bigger() {
         let t = 584u16.to_le_bytes();
         let temp = new_from_slice(&t);
-        assert_eq!(t, *GF2256::new(&temp).to_bytes())
+        assert_eq!(t, *GF2256::new(&temp).to_32_bytes())
     }
 
     fn cmp_with_trailing_zeros(cmp1: &[u8], cmp2: &[u8]) {
@@ -247,6 +239,6 @@ mod tests {
     fn bytes_round_trip_much_bigger() {
         let t = 584u64.to_le_bytes();
         let temp = new_from_slice(&t);
-        cmp_with_trailing_zeros(&t, &GF2256::new(&temp).to_bytes())
+        cmp_with_trailing_zeros(&t, &GF2256::new(&temp).to_32_bytes())
     }
 }

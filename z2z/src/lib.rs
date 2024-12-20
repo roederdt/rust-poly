@@ -1,22 +1,11 @@
 use std::ops::Deref;
 
-use serde::{Deserialize, Serialize, Serializer};
+use serde::{Deserialize, Serialize};
 #[derive(Copy, Clone, Debug, Eq, PartialEq, Serialize, Deserialize)]
 pub enum Z2z {
     Zero,
     One,
 }
-// impl Serialize for Z2z {
-//     fn serialize<S>(&self, serializer: S) -> Result<S::Ok, S::Error>
-//     where
-//         S: Serializer,
-//     {
-//         match self {
-//             Self::One => serializer.serialize_u8(1),
-//             Self::Zero => serializer.serialize_u8(0),
-//         }
-//     }
-// }
 impl Deref for Z2z {
     type Target = u8;
     fn deref(&self) -> &Self::Target {
