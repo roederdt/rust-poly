@@ -43,16 +43,26 @@ struct Cli {
 
 #[derive(Subcommand)]
 enum Commands {
+    /// Encrypts a secret and produces shares of the key
     Encode {
-        infile: String,
-        key_name: String,
+        /// The file with the secret to encrypt
+        in_path: String,
+        /// What you want to call the share files
+        share_prefix: String,
+        /// How many shares to create
         num_shares: usize,
+        /// The existing directory where the files will go
         out_path: String,
     },
+    /// Decrypts a secret from the ciphertext and shares of the key
     Decode {
+        /// The directory where the shares and cipher_iv file are
         in_path: String,
-        file_name: String,
-        num_files: usize,
+        /// Prefix for share files 0 through num_shares - 1
+        share_prefix: String,
+        /// How many shares to read, from 0 through num_shares - 1`
+        num_shares: usize,
+        /// Where to write the decrypted secret
         out_path: String,
     },
 }
@@ -144,18 +154,23 @@ fn main() -> Result<(), Error> {
     let threshold = cli.threshold.unwrap_or(0);
     match cli.command {
         Commands::Encode {
-            infile,
+            in_path,
             num_shares,
-            key_name,
+            share_prefix,
             out_path,
         } => {
-            let in_contents = fs::read_to_string(infile)?;
+            if num_shares < threshold.into() {
+                return Err(Error::InvalidArgError(String::from(format!(
+                    "Threshold({threshold}) cannot be greater than the number of shares({num_shares})",
+                ))));
+            }
+            let in_contents = fs::read_to_string(in_path)?;
 
             let (nonce, ciphertext, keys_vec) = encode(&in_contents, num_shares, threshold)?;
 
             if !(fs::exists(&out_path)?) {
                 return Err(Error::InvalidArgError(String::from(
-                    "Directory for output provided does not exists",
+                    "Directory for output provided does not exist",
                 )));
             }
 
@@ -182,7 +197,7 @@ fn main() -> Result<(), Error> {
 
             for i in 0..keys_vec.len() {
                 fs::write(
-                    format!("{out_path}/{key_name}_{i}"),
+                    format!("{out_path}/{share_prefix}_{i}"),
                     format!(" {}", keystring_vec[i]),
                 )?;
             }
@@ -190,10 +205,16 @@ fn main() -> Result<(), Error> {
 
         Commands::Decode {
             in_path,
-            file_name,
-            num_files,
+            share_prefix,
+            num_shares,
             out_path,
         } => {
+            if num_shares < threshold.into() {
+                return Err(Error::InvalidArgError(String::from(format!(
+                    "Threshold({threshold}) cannot be greater than the number of shares({num_shares})",
+                ))));
+            }
+
             let cipher_iv_string = fs::read_to_string(format!("{in_path}/cipher_iv"))?;
             let cipher_iv: CipherIv = serde_json::from_str(&cipher_iv_string)?;
 
@@ -204,16 +225,16 @@ fn main() -> Result<(), Error> {
             let mut temp_file;
             match cli.threshold {
                 Some(_) => {
-                    for i in 0..num_files {
-                        temp_file = fs::read_to_string(format!("{in_path}/{file_name}_{i}"))?;
+                    for i in 0..num_shares {
+                        temp_file = fs::read_to_string(format!("{in_path}/{share_prefix}_{i}"))?;
                         let temp_file: Vec<&str> = temp_file.split(" ").collect();
                         keys_vec
                             .push((String::from(temp_file[1]), Some(String::from(temp_file[2]))));
                     }
                 }
                 None => {
-                    for i in 0..num_files {
-                        temp_file = fs::read_to_string(format!("{in_path}/{file_name}_{i}"))?;
+                    for i in 0..num_shares {
+                        temp_file = fs::read_to_string(format!("{in_path}/{share_prefix}_{i}"))?;
                         keys_vec.push((temp_file, None));
                     }
                 }
