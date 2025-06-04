@@ -1,5 +1,6 @@
 mod euclidean;
 mod shamir;
+
 pub use euclidean::euclidean;
 use serde::Deserialize;
 use serde::Serialize;
@@ -19,6 +20,23 @@ use z2z::Z2z;
 #[derive(Clone, PartialEq, Eq, Serialize, Deserialize)]
 pub struct Poly<T> {
     values: Vec<T>,
+}
+
+#[derive(Copy, Clone)]
+pub struct Poly2_256{
+    first16 : u128,
+    second16 : u128,
+    top_bit : bool,
+}
+
+impl std::ops::Add for Poly2_256{
+    type Output = Self;
+    fn add(self,rhs: Poly2_256  )-> Poly2_256{
+        let new_first = self.first16 ^ rhs.first16;
+        let new_second = self.second16 ^ rhs.second16;
+        let new_bool = self.top_bit ^ rhs.top_bit;
+        return Poly2_256 { first16: new_first, second16: new_second, top_bit: new_bool }
+    }
 }
 
 pub trait PolyTraits<T>:
