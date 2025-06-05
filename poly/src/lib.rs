@@ -35,7 +35,51 @@ impl std::ops::Add for Poly2_256{
         let new_first = self.first16 ^ rhs.first16;
         let new_second = self.second16 ^ rhs.second16;
         let new_bool = self.top_bit ^ rhs.top_bit;
-        return Poly2_256 { first16: new_first, second16: new_second, top_bit: new_bool }
+        Poly2_256 { first16: new_first, second16: new_second, top_bit: new_bool }
+    }
+}
+
+impl std::ops::Sub for Poly2_256{
+    type Output = Self;
+    fn sub(self,rhs: Poly2_256  )-> Poly2_256{
+        let new_first = self.first16 ^ rhs.first16;
+        let new_second = self.second16 ^ rhs.second16;
+        let new_bool = self.top_bit ^ rhs.top_bit;
+        Poly2_256 { first16: new_first, second16: new_second, top_bit: new_bool }
+    }
+}
+
+impl std::ops::Mul for Poly2_256{
+    type Output = Self;
+    fn mul(self, rhs: Self) -> Self::Output {
+        let original1:usize = self.first16 as usize ^ ((self.second16 as usize)<<128);
+        let original2:usize = rhs.first16 as usize ^ ((rhs.second16 as usize)<<128);
+        let mut result:usize = 0;
+        let mut order:u32 = 0;
+        for i in original2.to_le_bytes(){
+            for j in 0..8{
+                //checks if the jth bit is 1
+                if i>>j&1!=0{
+                    // xors in the multiplied value, shifter by the power of the bit
+                    result^= original1<<order;
+                }
+                order+= 1;
+            }
+        }
+        Poly2_256::from(result)
+    }
+}
+
+impl std::ops::Div for Poly2_256{
+    type Output = Self;
+    fn div(self, rhs: Self) -> Self::Output {
+        self
+    }
+}
+
+impl From<usize> for Poly2_256{
+    fn from(value: usize) -> Self {
+        Poly2_256 { first16: 1, second16: 2, top_bit: true }
     }
 }
 
