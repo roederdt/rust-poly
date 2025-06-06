@@ -52,37 +52,87 @@ impl std::ops::Sub for Poly2_256{
 impl std::ops::Mul for Poly2_256{
     type Output = Self;
     fn mul(self, rhs: Self) -> Self::Output {
-        let original1:usize = self.first16 as usize ^ ((self.second16 as usize)<<128);
-        let original2:usize = rhs.first16 as usize ^ ((rhs.second16 as usize)<<128);
-        let mut result:usize = 0;
-        let mut order:u32 = 0;
-        for i in original2.to_le_bytes(){
+        let original1:[u8;256] = Poly2_256::into(self);
+        let original2:[u8;256] = Poly2_256::into(rhs);
+        let mut result =[0;64];
+        let mut traveled:usize;
+        let mut shift:usize = 0;
+        for i in original2{
             for j in 0..8{
+                traveled = 0;
                 //checks if the jth bit is 1
-                if i>>j&1!=0{
-                    // xors in the multiplied value, shifter by the power of the bit
-                    result^= original1<<order;
+                if i>>j&1==1{
+                    for k in original1{
+                        for l in 0..8{
+                            // xors in the multiplied by 1 value to the right spot in the vector
+                            result[shift+traveled] ^= k>>l&1;
+                            traveled+= 1;
+
+                        }
+
+                    }
                 }
-                order+= 1;
+                shift+=1;
             }
         }
         Poly2_256::from(result)
+        // evil method
+        // for a in self.second16.to_le_bytes(){
+        //     for e in 0..8{
+        //         for b in self.first16.to_le_bytes(){
+        //             for f in 0..8{
+        //                 for c in rhs.second16.to_le_bytes(){
+        //                     for g in 0..8{
+        //                         for d in rhs.first16.to_le_bytes(){
+        //                             for h in 0..8{
+        //                                 //checks if the jth bit is 1
+        //                                 if >>&1!=0{
+        //                                     // xors in the multiplied value, shifter by the power of the bit into the correct result
+        //                                     result^= original1<<order;
+        //                                 }
+        //                                 order+= 1;
+        //                             }
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+        // }
     }
 }
 
 impl std::ops::Div for Poly2_256{
     type Output = Self;
-    fn div(self, rhs: Self) -> Self::Output {
+    fn div(self, _rhs: Self) -> Self::Output {
         self
     }
 }
 
-impl From<usize> for Poly2_256{
-    fn from(value: usize) -> Self {
+impl From<[u8;64]> for Poly2_256{
+    fn from(_value: [u8;64]) -> Self {
         Poly2_256 { first16: 1, second16: 2, top_bit: true }
     }
 }
-
+impl From<Poly2_256> for [u8;256]{
+    fn from(value:Poly2_256) -> Self {
+        let mut ret_val = [0;256];
+        let mut count = 0;
+        for i in value.first16.to_le_bytes(){
+            for j in 0..8{
+                // if the bit is a 1
+                if i>>j&1==1{
+                    ret_val[count] = 1;
+                }
+                else{
+                    ret_val[count] = 0;
+                }
+                count +=1;
+            }
+        }
+        ret_val
+    }
+}
 pub trait PolyTraits<T>:
     std::ops::Add<Output = T>
     + std::ops::Sub<Output = T>
