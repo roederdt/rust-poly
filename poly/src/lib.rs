@@ -54,7 +54,7 @@ impl std::ops::Mul for Poly2_256{
     fn mul(self, rhs: Self) -> Self::Output {
         let original1:[u8;256] = Poly2_256::into(self);
         let original2:[u8;256] = Poly2_256::into(rhs);
-        let mut result =[0;64];
+        let mut result =[0;512];
         let mut traveled:usize;
         let mut shift:usize = 0;
         for i in original2{
@@ -75,7 +75,11 @@ impl std::ops::Mul for Poly2_256{
                 shift+=1;
             }
         }
-        Poly2_256::from(result)
+        // find the irreducable polynomial representation
+        Poly2_256::reduce(result, Poly2_256 { first16: 0, second16: 0, top_bit: true })
+
+
+
         // evil method
         // for a in self.second16.to_le_bytes(){
         //     for e in 0..8{
@@ -108,12 +112,35 @@ impl std::ops::Div for Poly2_256{
         self
     }
 }
-
-impl From<[u8;64]> for Poly2_256{
-    fn from(_value: [u8;64]) -> Self {
-        Poly2_256 { first16: 1, second16: 2, top_bit: true }
+// truncates(fix so that it panics if it has stuff in upper part)
+impl From<[u8;512]> for Poly2_256{
+    fn from(value: [u8;512]) -> Self {
+        let mut temp = [0;256];
+        for i in 0..256{
+            temp[i] = value[i]
+        }
+        Poly2_256::from(temp)
     }
 }
+
+impl From<[u8;256]> for Poly2_256{
+    fn from(value: [u8;256]) -> Self {
+        let mut first16:u128 = 0;
+        for i in 0..128{
+            if value[i] == 1{
+                first16 ^= 1<<i;
+            }
+        }
+        let mut second16:u128 = 0;
+        for i in 0..128{
+            if value[i+128] == 1{
+                second16 ^= 1<<i;
+            }
+        }
+        Poly2_256 { first16 , second16, top_bit: false }
+    }
+}
+
 impl From<Poly2_256> for [u8;256]{
     fn from(value:Poly2_256) -> Self {
         let mut ret_val = [0;256];
@@ -131,6 +158,79 @@ impl From<Poly2_256> for [u8;256]{
             }
         }
         ret_val
+    }
+}
+impl From<Poly2_256> for [u8;512]{
+    fn from(value:Poly2_256) -> Self {
+        let mut ret_val = [0;512];
+        let mut count = 0;
+        for i in value.first16.to_le_bytes(){
+            for j in 0..8{
+                // if the bit is a 1
+                if i>>j&1==1{
+                    ret_val[count] = 1;
+                }
+                else{
+                    ret_val[count] = 0;
+                }
+                count +=1;
+            }
+        }
+        if value.top_bit{
+            ret_val[256] = 1;
+        }
+        ret_val
+    }
+}
+impl std::ops::Rem for Poly2_256{
+    type Output = Self;
+
+    fn rem(self, rhs: Self) -> Self::Output {
+        Poly2_256::naive_div(self.into(), rhs).1
+    }
+}
+
+impl Poly2_256{
+    // div used for reduction
+    pub fn naive_div(poly: [u8;512], rhs: Poly2_256)->(Self,Self){
+        if rhs.first16 == 0 && rhs.second16 == 0 {panic!("Divide by zero error")}
+        let mut quotient = [0;512];
+        let mut remainder:[u8;512] = poly;
+        let divisor:[u8;512] = Poly2_256::into(rhs);
+        let degree = rhs.len();
+        let mut t = 0;
+        // until the dividend is shorter than or equal in length to the divisor
+        while t<degree{
+            // find the new length of t
+            for i in 511..1{
+                if !(remainder[i]==1){t = i;break}
+            }
+            // find the shift
+            let s = t- degree;
+            // add the shift to the total(answer)
+            quotient[s] ^= 1;
+            // "subtract" from the remainder by the shifted(multiplied) divisor
+            for i in 0..512-s{
+                remainder[i+s] ^= divisor[i];
+            }
+
+        }
+        (Poly2_256::from(quotient), Poly2_256::from(remainder))
+    }
+    pub fn len(self)->usize{
+        if self.top_bit{
+            return 256
+        }
+        else{
+            let temp:[u8;256] = Poly2_256::into(self);
+            for i in 255..1{
+                if !(temp[i]==1){return i}
+            }
+        }
+        0
+    }
+    pub fn reduce(poly: [u8;512], rhs: Poly2_256)->Poly2_256{
+        Poly2_256::naive_div(poly, rhs).1
     }
 }
 pub trait PolyTraits<T>:
