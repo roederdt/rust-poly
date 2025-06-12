@@ -22,7 +22,7 @@ pub struct Poly<T> {
     values: Vec<T>,
 }
 
-#[derive(Copy, Clone)]
+#[derive(Copy, Clone, PartialEq, Debug)]
 pub struct Poly2_256{
     first16 : u128,
     second16 : u128,
@@ -52,31 +52,27 @@ impl std::ops::Sub for Poly2_256{
 impl std::ops::Mul for Poly2_256{
     type Output = Self;
     fn mul(self, rhs: Self) -> Self::Output {
-        let original1:[u8;256] = Poly2_256::into(self);
-        let original2:[u8;256] = Poly2_256::into(rhs);
+        let original_lhs:[u8;256] = Poly2_256::into(self);
+        let original_rhs:[u8;256] = Poly2_256::into(rhs);
         let mut result =[0;512];
         let mut traveled:usize;
         let mut shift:usize = 0;
-        for i in original2{
-            for j in 0..8{
+        for i in original_rhs{
                 traveled = 0;
                 //checks if the jth bit is 1
-                if i>>j&1==1{
-                    for k in original1{
-                        for l in 0..8{
+                if i==1{
+                    for k in original_lhs{
                             // xors in the multiplied by 1 value to the right spot in the vector
-                            result[shift+traveled] ^= k>>l&1;
+                            result[shift+traveled] ^= k;
                             traveled+= 1;
-
-                        }
 
                     }
                 }
                 shift+=1;
-            }
+
         }
         // find the irreducable polynomial representation
-        Poly2_256::reduce(result, Poly2_256 { first16: 0, second16: 0, top_bit: true })
+        Poly2_256::reduce(result, Poly2_256 { first16: 1, second16: 0, top_bit: true })
 
 
 
@@ -119,6 +115,11 @@ impl From<[u8;512]> for Poly2_256{
         for i in 0..256{
             temp[i] = value[i]
         }
+        for i in 256..512{
+            if value[i] !=0{
+                panic!("truncated values when changing to Poly2_256 from[u8;512]");
+            }
+        }
         Poly2_256::from(temp)
     }
 }
@@ -157,6 +158,18 @@ impl From<Poly2_256> for [u8;256]{
                 count +=1;
             }
         }
+        for i in value.second16.to_le_bytes(){
+            for j in 0..8{
+                // if the bit is a 1
+                if i>>j&1==1{
+                    ret_val[count] = 1;
+                }
+                else{
+                    ret_val[count] = 0;
+                }
+                count +=1;
+            }
+        }
         ret_val
     }
 }
@@ -165,6 +178,18 @@ impl From<Poly2_256> for [u8;512]{
         let mut ret_val = [0;512];
         let mut count = 0;
         for i in value.first16.to_le_bytes(){
+            for j in 0..8{
+                // if the bit is a 1
+                if i>>j&1==1{
+                    ret_val[count] = 1;
+                }
+                else{
+                    ret_val[count] = 0;
+                }
+                count +=1;
+            }
+        }
+         for i in value.second16.to_le_bytes(){
             for j in 0..8{
                 // if the bit is a 1
                 if i>>j&1==1{
@@ -194,6 +219,12 @@ impl Poly2_256{
     // div used for reduction
     pub fn naive_div(poly: [u8;512], rhs: Poly2_256)->(Self,Self){
         if rhs.first16 == 0 && rhs.second16 == 0 {panic!("Divide by zero error")}
+        let mut t = 0;
+        for i in (0..512).rev(){
+                if poly[i]==1{t = i;break}
+        }
+        if t<=rhs.len(){return(Poly2_256{first16:0,second16: 0,top_bit:false},Poly2_256::from(poly))}
+        dbg!(1);
         let mut quotient = [0;512];
         let mut remainder:[u8;512] = poly;
         let divisor:[u8;512] = Poly2_256::into(rhs);
@@ -202,16 +233,19 @@ impl Poly2_256{
         // until the dividend is shorter than or equal in length to the divisor
         while t<degree{
             // find the new length of t
-            for i in 511..1{
-                if !(remainder[i]==1){t = i;break}
+            for i in (0..512).rev(){
+                if remainder[i]==1{t = i;break}
             }
+            dbg!(t);
             // find the shift
-            let s = t- degree;
+            let s = t - degree;
             // add the shift to the total(answer)
             quotient[s] ^= 1;
+
             // "subtract" from the remainder by the shifted(multiplied) divisor
             for i in 0..512-s{
                 remainder[i+s] ^= divisor[i];
+                dbg!(i,s,remainder[i+s]);
             }
 
         }
@@ -608,6 +642,64 @@ impl<T: PolyTraits<T> + num::Zero + num::One> std::ops::Div for Poly<T> {
 
         (Poly::new(temp), Poly::new(dividend))
     }
+}
+
+#[cfg(test)]
+mod poly2_256_tests {
+
+    use crate::Poly2_256;
+
+    #[test]
+    fn add_test(){
+        let t = Poly2_256 { first16: 1, second16: 0, top_bit: false };
+        let f = Poly2_256 { first16: 4, second16: 0, top_bit: false };
+        assert_eq!(t+f, Poly2_256 { first16: 5, second16: 0, top_bit: false });
+    }
+
+    #[test]
+    fn sub_test(){
+        let t = Poly2_256 { first16: 3, second16: 0, top_bit: false };
+        let f = Poly2_256 { first16: 1, second16: 0, top_bit: false };
+        assert_eq!(t+f, Poly2_256 { first16: 2, second16: 0, top_bit: false });
+    }
+
+    #[test]
+    fn round_add_sub_test(){
+        let t = Poly2_256 { first16: 1, second16: 0, top_bit: false };
+        let f = Poly2_256 { first16: 4, second16: 0, top_bit: false };
+        assert_eq!(f+t-f, Poly2_256 { first16: 1, second16: 0, top_bit: false });
+    }
+
+    #[test]
+    fn odd_add_test(){
+        let t = Poly2_256 { first16: 1, second16: 0, top_bit: false };
+        let f = Poly2_256 { first16: 3, second16: 0, top_bit: false };
+        assert_eq!(t+f, Poly2_256 { first16: 2, second16: 0, top_bit: false });
+    }
+
+    #[test]
+    fn odd_sub_test(){
+        let t = Poly2_256 { first16: 1, second16: 0, top_bit: false };
+        let f = Poly2_256 { first16: 8, second16: 0, top_bit: false };
+        assert_eq!(t+f, Poly2_256 { first16: 9, second16: 0, top_bit: false });
+    }
+
+    #[test]
+    fn simple_mul_test_without_reduce(){
+        let t = Poly2_256 { first16: 1, second16: 0, top_bit: false };
+        let f = Poly2_256 { first16: 3, second16: 0, top_bit: false };
+        dbg!(f*t);
+        assert_eq!(t*f, Poly2_256 { first16: 3, second16: 0, top_bit: false });
+    }
+
+    #[test]
+    fn simple_mul_test_with_reduce(){
+        let t = Poly2_256 { first16: 8, second16: 0, top_bit: false };
+        let f = Poly2_256 { first16: 0, second16: num::pow(2,127), top_bit: false };
+        dbg!(t*f);
+        assert_eq!(t*f, Poly2_256 { first16: 4, second16: 0, top_bit: false });
+    }
+
 }
 
 #[cfg(test)]
